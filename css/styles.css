@@ -1,0 +1,473 @@
+* {
+    /*cursor: url(https://cur.cursors-4u.net/games/gam-4/gam372.cur), default !important; direct path*/
+    cursor: url("../img/cursor.cur"), default !important;
+    font-family: roboto;
+    margin: 0;
+    padding: 0;
+}
+
+img {
+    pointer-events: none;
+}
+
+html {
+    background-color: #242426;
+}
+/* Used for the allies frames */
+.flexframe {
+    display: flex;
+    flex-wrap:wrap;
+    justify-content: left;
+    user-select: none;
+}
+
+.allyframecontainer {
+    display: block;
+    column-count: 1;
+    width: 700px;
+    height: 100%;
+    margin-left: 10px;
+    background-color: rgba(255, 0, 0, 0.137);
+}
+
+.allyhpbar {
+    width: 130px;
+    height: 70px;
+    margin: 3px 6px 3px 6px;
+    display: inline-block;
+    position: relative;
+    background-color: #00000075;
+    border: 1px solid transparent;
+    border-radius: 0px;
+    background-clip: padding-box;
+}
+
+/* HP text */
+.allyhpbar:before {
+    content: attr(data-label);
+    display: flex;
+    font-size: 18px;
+    color: #fff;
+    text-shadow: 
+        2px 0 0 #000, 
+        -2px 0 0 #000, 
+        0 2px 0 #000, 
+        0 -2px 0 #000, 
+        1px 1px #000, 
+        -1px -1px 0 #000, 
+        1px -1px 0 #000, 
+        -1px 1px 0 #000;
+    position: absolute;
+    text-align: center;
+    justify-content: center;
+    align-items: center;
+    top: 0; left: 0; bottom: 0; right: 0;
+  }
+
+.allyhpbar .allyhpvalue {
+    background: rgb(0,117,0);
+    background: linear-gradient(0deg, rgba(0,117,0,1) 0%, rgba(0,180,0,1) 50%, rgba(0,117,0,1) 100%);
+    display: flex;
+    height: 100%;
+}
+
+.allyhpbar:hover {
+    border: 1px solid #fff;
+    border-radius: 0px;
+}
+
+.allyhpbar .role {
+    position: absolute;
+    color: #fff;
+    transform: scale(0.75);
+    top: 0; left: 0; bottom: 50px; right: auto;
+}
+
+/* Spellbar and cast bar position */
+.playerInterface {
+    display: flex;
+    position: fixed; /*absolute*/
+    flex-wrap: wrap;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+    top: auto; left: 0; bottom: 0; right: 0;
+    pointer-events: none;
+}
+
+.spellbar {
+    display: flex;
+    flex-wrap: wrap;
+    /*background-color: #6effff91;*/
+    column-count: 1;
+    /*max-width: 696px; old version*/
+    max-width: 600px;
+    justify-content: center;
+    pointer-events: all;
+}
+
+/* Old version
+.spellcontainer {
+    display: inline-flex;
+    position: relative;
+    justify-content: center;
+    align-items: center;
+    margin: 4px 4px 4px 4px;
+    background-color: #f28cffbb;
+    width: 50px;
+    height: 50px;
+} */
+
+.spellcontainer {
+    display: inline-flex;
+    position: relative;
+    justify-content: center;
+    align-items: center;
+    background-image: url("../img/spellbar/holder.png");
+    width: 50px;
+    height: 50px;
+}
+
+/*.spellcontainer:hover {
+    outline: 5px solid rgba(63, 65, 224, 0.692);
+    outline-offset: -5px;
+}*/
+
+.spellcontainer .spellHover {
+    position: fixed;
+    display: block;
+    z-index: 10;
+    width: 46px;
+    height: 46px;
+    border-radius: 4px;
+}
+
+.spellcontainer:hover .spellHover{
+    box-shadow: inset 0 0 4px 4px #5b5cb193; /* prevent a display bug if a spell is spammed*/
+}
+
+.spellcontainer .spellHover:hover {
+    /*background: radial-gradient(circle, rgba(1,0,109,0) 38%, rgba(63,65,224,0.692) 78%);*/
+    box-shadow: inset 0 0 4px 4px #5b5cb193; /* 2b457a */
+} 
+
+.spellcontainer .spellHoverClickHold {
+    position: fixed;
+    display: block;
+    z-index: 11;
+    width: 46px;
+    height: 46px;
+    border: 2px groove transparent;
+    border-radius: 6px ;
+    background-color: transparent;
+}
+
+.spellcontainer .spellHoverClickHold:hover {
+    border: 2px groove #e9df5c;
+    box-shadow: inset 0 0 6px 6px #5377eeb7;
+}
+
+.spellcontainer .spellCooldownBackground {
+    width: 46px;
+    height: 46px;
+    border-radius: 6px ;
+    display: flex;
+    position: absolute;
+    z-index: 12;
+    pointer-events: none;
+}
+
+.spellcontainer .spellCooldownTimer {
+    position: fixed;
+    display: inline-block;
+    z-index: 100;
+    color: #fff;
+    font-weight: 500;
+    pointer-events: none;
+    text-shadow: 
+        2px 0 0 #000, 
+        -2px 0 0 #000, 
+        0 2px 0 #000, 
+        0 -2px 0 #000, 
+        1px 1px #000, 
+        -1px -1px 0 #000, 
+        1px -1px 0 #000, 
+        -1px 1px 0 #000;
+}
+
+.spellcontainer img {
+    border: 0px solid transparent;
+    border-radius: 0px;
+    object-fit: fill;
+    width: 46px;
+    height: 46px;
+    border: 2px groove #a5a5a5;
+    border-radius: 6px ;
+}
+
+.spellcontainer .notEnoughManaSpell {
+    position: fixed;
+    display: block;
+    z-index: 10;
+    background-color: rgba(42, 42, 68, 0.616);
+    width: 50px;
+    height: 50px;
+    border-radius: 6px ;
+}
+
+.pcastbar {
+    display: inline-block;
+    position: relative;
+    width: 250px;
+    height: 30px;
+    margin-bottom: 20px;
+}
+
+.pcastbar .castbarbg {
+    z-index: -1;
+    background-color: rgba(80, 80, 80, 0.300);
+    display: block;
+    position: absolute;
+    height: 100%;
+}
+
+.pcastbar:before {
+    content: attr(data-label);
+    font-size: 16px;
+    z-index: 3;
+    display: flex;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    color: #fff;
+    text-align: center;
+    text-shadow: 
+        2px 0 0 #000, 
+        -2px 0 0 #000, 
+        0 2px 0 #000, 
+        0 -2px 0 #000, 
+        1px 1px #000, 
+        -1px -1px 0 #000, 
+        1px -1px 0 #000, 
+        -1px 1px 0 #000;
+    justify-content: center;
+    align-items: center;
+  }
+
+.pcastbar .pincantationtime {
+    z-index: 1;
+    background: rgb(83,62,17);
+    background: linear-gradient(0deg, rgba(83,62,17,1) 0%, rgba(174,122,20,1) 50%, rgba(83,62,17,1) 100%);
+    display: flex;
+    height: 100%;
+}
+
+.pcastbar .castBarGlowing {
+    z-index: 2;
+    position: absolute;
+    background-color: #ffebc1;
+    box-shadow: 0px 0 8px 4px #fff6a6ce;
+    width: 1px;
+    height: 100%;
+}
+
+.pcastbar .chainIncantIndicator {
+    z-index: 2;
+    position: absolute;
+    background-color: yellow;
+    width: 1px;
+    height: 100%;
+}
+
+.playerFrame {
+    z-index: -2;
+    display: inline-block;
+    position: relative;
+    width: 250px;
+    height: 120px;
+    margin-bottom: 100px;
+    background-color: #00000075;
+    border: 1px solid transparent;
+    border-radius: 1px;
+    background-clip: padding-box;
+    pointer-events: all;
+}
+
+.playerFrame:hover {
+    border: 1px solid #fff;
+    border-radius: 0px;
+}
+
+.playerFrame .playerHPbar {
+    width: 100%;
+    height: 90px;
+    display: flex;
+    position: relative;
+}
+
+.playerFrame .playerHPbar:before {
+    content: attr(data-label);
+    font-size: 16px;
+    z-index: 2;
+    display: flex;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    color: #fff;
+    text-align: center;
+    text-shadow: 
+        2px 0 0 #000, 
+        -2px 0 0 #000, 
+        0 2px 0 #000, 
+        0 -2px 0 #000, 
+        1px 1px #000, 
+        -1px -1px 0 #000, 
+        1px -1px 0 #000, 
+        -1px 1px 0 #000;
+    justify-content: center;
+    align-items: center;
+}
+
+.playerFrame .playerHPbarContent {
+    z-index: -1;
+    background: rgb(0,117,0);
+    background: linear-gradient(0deg, rgba(0,117,0,1) 0%, rgba(0,180,0,1) 50%, rgba(0,117,0,1) 100%);
+    display: flex;
+    height: 100%;
+}
+
+.playerFrame .playerManabar {
+    width: 100%;
+    height: 30px;
+    display: flex;
+    position: relative;
+}
+
+.playerFrame .playerManabar:before {
+    content: attr(data-label);
+    font-size: 16px;
+    z-index: 2;
+    display: flex;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    color: #fff;
+    text-align: center;
+    text-shadow: 
+        2px 0 0 #000, 
+        -2px 0 0 #000, 
+        0 2px 0 #000, 
+        0 -2px 0 #000, 
+        1px 1px #000, 
+        -1px -1px 0 #000, 
+        1px -1px 0 #000, 
+        -1px 1px 0 #000;
+    justify-content: center;
+    align-items: center;
+}
+
+.playerFrame .playerManabarContent {
+    z-index: -1;
+    background: rgb(0,0,212,1);
+    /* background: linear-gradient(0deg, rgba(1,0,109,1) 0%, rgba(0,0,212,1) 50%, rgba(1,0,109,1) 100%); non-flat version */
+    display: flex;
+    height: 100%;
+}
+
+/* Selected ally */
+.selected {
+    border: 1px solid #ccc;
+    border-radius: 0px;
+    outline: 4px solid #ccc;
+    outline-offset: 0px;
+}
+
+.selected:hover {
+    border: 1px solid #fff;
+    border-radius: 0px;
+    outline: 4px solid #fff;
+    outline-offset: 0px;
+}
+
+.selected:active {
+    border: 1px solid #ccc;
+    border-radius: 0px;
+    outline: 4px solid #ccc;
+    outline-offset: -5px;
+}
+
+.spellTooltipPosition {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    width: 380px;
+    height: auto;
+    background-color: #232636d5; /* #6777ca(+80) */
+    right: 0;
+    bottom: 0;
+    margin-right: 20px;
+    margin-bottom: 10px;
+    border: 2px ridge #bcb7bb;
+    border-radius: 6px;
+}
+
+.spellTooltipTitle {
+    content: attr(data-label);
+    position: relative;
+    display: inline-block;
+    text-align: start;
+    width: auto;
+    height: 21px;
+    margin: 10px 10px 2px 10px;
+    font-size: 21px;
+    color: #fff;
+}
+
+.spellTooltipManaCost {
+    content: attr(data-label);
+    position: relative;
+    display: inline-block;
+    text-align: start;
+    width: auto;
+    height: 18px;
+    margin: 2px 10px 2px 10px;
+    font-size: 18px;
+    color: #fff;
+}
+
+.spellTooltipCastTime {
+    content: attr(data-label);
+    position: relative;
+    display: inline-block;
+    text-align: start;
+    width: auto;
+    height: 18px;
+    margin: 2px 10px 2px 10px;
+    font-size: 18px;
+    color: #fff;
+}
+
+.spellTooltipCooldown {
+    content: attr(data-label);
+    position:absolute;
+    right: 0;
+    display: inline-block;
+    text-align: end;
+    width: auto;
+    height: 100%;
+    font-size: 18px;
+    color: #fff;
+}
+
+.spellTooltipDesc {
+    content: attr(data-label);
+    position: relative;
+    display: inline-block;
+    text-align: start;
+    width: auto;
+    height: auto;
+    margin: 2px 10px 10px 10px;
+    font-size: 18px;
+    color: #ffd100;
+}

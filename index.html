@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>WoW Healer Training</title>
+    <link rel="icon" href="img/pageicon.png" />
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.12/dist/vue.js"></script>
+</head>
+
+<body>
+    <div id="app">
+        <button @click="addAlly">debugspawn</button>
+        <button @click="addSpell">debugaddspell</button>
+        <button @click="playerSetMinMana">mana 0</button>
+        <button @click="playerSetMaxMana">mana 100</button>
+        <button @click="player.addMana(-10)">Mana -10</button>
+        <input v-model="manaRegen" id="number" type="number" style="width: 35px;">
+        <div style="color: white; display: inline-block;">
+            {{ selectedEntity ? selectedEntity.id : 'none' }}
+            <div style="color: #b3b3b3; display: inline-block; margin-left: 10px;">
+                {{ selected ? selected : 'none' }}
+            </div>
+            <div style="color: #b3b3b3; display: inline-block; margin-left: 10px;">
+                {{ isPlayerCasting }}
+            </div>
+            <div style="color: #b3b3b3; display: inline-block; margin-left: 10px;">
+                {{ keyPressed }}
+            </div>
+            <div style="color: #b3b3b3; display: inline-block; margin-left: 10px;">
+                {{ hover }}
+            </div>
+            <div style="color: #8ecbee; display: inline-block; margin-left: 10px;">
+                {{ holdClickHover }}
+            </div>
+            <div style="color: #5656ff; display: inline-block; margin-left: 10px;">
+                {{ Number((player.mana).toFixed(2)) }}
+            </div>
+            <div style="color: #56ff5e; display: inline-block; margin-left: 10px;">
+                {{ Number((player.hp).toFixed(2)) }}
+            </div>
+        </div>
+
+        <div class="flexframe">
+            <div class="allyframecontainer">
+                <div v-for="(ally,index) in allies" :key="index" :class="'allyhpbar' +(selected==index?' selected':'')"
+                    :data-label="formatHpLabel(ally)" @click="()=>selected=index">
+                    <span class="allyhpvalue" :style="'width:'+Math.max(0,ally.hp)+'%'"></span>
+                    <span class="role"><img :src="'img/roles/'+ally.role+'.png'" /></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="playerInterface">
+
+            <div :class="'playerFrame' +(selected==player.id?' selected':'')" @click="()=>selected=player.id">
+                <div class="playerHPbar" :data-label="Number((player.hp).toFixed(1))+'%'">
+                    <span class="playerHPbarContent" :style="'width:'+player.hp+'%'"></span>
+                </div>
+                <div class="playerManabar" :data-label="Number((player.mana).toFixed(1))+'%'">
+                    <span class="playerManabarContent" :style="'width:'+player.mana+'%'"></span>
+                </div>
+            </div>
+
+            <div class="pcastbar" :data-label="currentCastLabel">
+                <div class="castbarbg" :style="'width:'+castbarBackground+'%'"></div>
+                <div v-if="isPlayerCasting" class="castBarGlowing" :style="'left:'+spellProgressBar+'%'"></div>
+                <div v-if="isPlayerCasting" class="chainIncantIndicator"
+                    :style="'left:'+((incantTotalTime-chainSpellDelayBeforeEnd)/incantTotalTime*100)+'%'"></div>
+                <div class="pincantationtime" :style="'width:'+spellProgressBar+'%'"></div>
+            </div>
+
+            <div class="spellbar">
+                <!-- Idk if the behaviour is correct but when you press the click on a spell and then release it on another spell, the spell isn't cast => @click. -->
+                <div v-for="(spell,index) in spells" :key="index" class="spellcontainer" @click="()=>useSpell(spell)"
+                    @mouseover="() => onSpellHover(spell)" @mouseleave="() => onSpellLeave(spell)"
+                    @mousedown="holdClickHoverOn" @mouseup="holdClickHoverOff" @touchstart="holdClickHoverOn"
+                    @touchend="holdClickHoverOff" @touchcancel="holdClickHoverOff">
+                    <img v-if="spell.icon" :src="'img/spells/'+spell.icon+'.jpg'" />
+                    <div v-if="spell.icon && spell.mana>player.mana" class="notEnoughManaSpell"></div>
+                    <!-- Sometimes the :hover on the css takes some times to appear after holdClickHoverHold event -->
+                    <div :class="{spellHover:!holdClickHover}"></div>
+                    <div :class="{spellHoverClickHold:holdClickHover}"></div>
+                    <div v-if="spell.currentCooldown != 0" class="spellCooldownBackground"
+                        :style="'background: conic-gradient(transparent '+(360*(1-spell.currentCooldown/spell.cooldown))+'deg, #14161bb0 '+(360*(1-spell.currentCooldown/spell.cooldown))+'deg);'">
+                    </div>
+                    <div v-if="spell.currentCooldown == 0 && underGCD" class="spellCooldownBackground"
+                        :style="'background: conic-gradient(transparent '+(360*(1-remainGCD/globalCooldown))+'deg, #14161bb0 '+(360*(1-remainGCD/globalCooldown))+'deg);'">
+                    </div>
+                    <div v-if="spell.currentCooldown != 0 && spell.currentCooldown>60000" class="spellCooldownTimer"
+                        style="font-size: 20px;">{{ Math.ceil(spell.currentCooldown/1000/60) }} m</div>
+                    <div v-if="spell.currentCooldown != 0 && spell.currentCooldown<=60000" class="spellCooldownTimer"
+                        style="font-size: 25px;">{{ Math.ceil(spell.currentCooldown/1000) }}</div>
+                </div>
+            </div>
+
+            <div class="spellTooltipPosition" v-if="hover">
+                <div class="spellTooltipTitle">
+                    {{ hoveredSpell.name }}
+                </div>
+                <div class="spellTooltipManaCost" v-if="hoveredSpell.mana>0">
+                    {{ hoveredSpell.mana }}% Mana
+                </div>
+                <div class="spellTooltipCastTime">
+                    <template v-if="hoveredSpell.incantTime>1">{{ hoveredSpell.incantTime/1000 }} sec cast</template>
+                    <template v-else-if="hoveredSpell.incantTime==0">Instant</template>
+                    <div class="spellTooltipCooldown" v-if="hoveredSpell.cooldown>0">
+                        {{ Number((hoveredSpell.cooldown/1000/60).toFixed(1)) }} min cooldown
+                    </div>
+                </div>
+                <div class="spellTooltipDesc">
+                    {{ hoveredSpell.tooltip }}
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+    <script>
+        function rand(min, max) { // min and max included 
+            return Math.floor(Math.random() * (max - min + 1) + min);
+        }
+        var app = new Vue({
+            el: '#app',
+            data: {
+                keyPressed: false,
+                globalIncrement: 0,
+                selected: -1,
+                currentCast: -1,
+                currentCastAnim: -1,
+                currentCastName: null,
+                currentCastTime: null,
+                spellProgressBar: 0,
+                castbarBackground: 0,
+                incantTotalTime: 0,
+                breakIncantation: 0,
+                breakChanneling: 0,
+                castTimeRemaining: 0,
+                isPlayerCasting: false,
+                isPlayerChanneling: false,
+                hover: false,
+                hoveredSpell: null,
+                holdClickHover: false,
+                spellInQueue: false,
+                manaRegen: 0.5,
+                globalCooldown: 1500,
+                remainGCD: null,
+                underGCD: false,
+                chainSpellDelayBeforeEnd: 600,
+                allies: [
+                ],
+                player: {
+                    hp: 10,
+                    hpShield: 0,
+                    mana: 100,
+                    id: -1,
+                    spellPower: 100,
+                    addMana: function (value) {
+                        this.mana = Math.max(0, Math.min(100, this.mana + value))
+                    },
+                    addHp: function (value) {
+                        this.hp = Math.max(0, Math.min(100, this.hp + value))
+                    },
+                    addShield: function (value) {
+                        this.hpShield = Math.max(0, Math.min(100, this.hpShield + value))
+                    },
+                },
+                spells: [
+                ],
+                spellPool: {
+                    Priest: [
+                        {
+                            name: "Flash Heal",
+                            mana: 3.6,
+                            manapersecond: 0,
+                            tooltip: "A fast spell that heals an ally for", // (203% of Spell power).",
+                            icon: "spell_holy_flashheal",
+                            incantTime: 1500,
+                            canalised: false,
+                            cooldown: 0,
+                            currentCooldown: 0,
+                            affectGCD: true,
+                            deadTargetEffect: 0, // 0 = false; 1 = true ==> if the spell is only usable on dead allies (only for battle rez, i think c:)
+                            key: 49,
+                            use: (game, state) => {
+                                game.findEntityById(state.selectedEntityId).addHp(15)
+                            },
+                        },
+                        {
+                            name: "Heal",
+                            mana: 2.4,
+                            manapersecond: 0,
+                            tooltip: "An efficient spell that heals an ally for", // (295% of Spell power).",
+                            icon: "spell_holy_greaterheal",
+                            incantTime: 2500,
+                            canalised: false,
+                            cooldown: 0,
+                            currentCooldown: 0,
+                            affectGCD: true,
+                            deadTargetEffect: 0,
+                            key: 50,
+                            use: (game, state) => {
+                                game.findEntityById(state.selectedEntityId).addHp(30)
+                            },
+                        },
+                        {
+                            name: "Rebirth",
+                            mana: 0,
+                            manapersecond: 0,
+                            tooltip: "Returns the spirit to the body, restoring a dead target to life with 100% health. Castable in combat.",
+                            icon: "spell_nature_reincarnation",
+                            incantTime: 2000,
+                            canalised: false,
+                            cooldown: 600000,
+                            currentCooldown: 0,
+                            affectGCD: true,
+                            deadTargetEffect: 1,
+                            key: 51,
+                            use: (game, state) => {
+                                game.findEntityById(state.selectedEntityId).addHp(100)
+                            },
+                        },
+                        {
+                            name: "Soothing Mist",
+                            mana: 0,
+                            manapersecond: 0.4,
+                            tooltip: "Heals the target for (440% of Spell power) over 8 sec.  While channeling, Enveloping Mist and Vivify may be cast instantly on the target.", // (295% of Spell power).",
+                            icon: "ability_monk_soothingmists",
+                            incantTime: 0,
+                            canalised: true,
+                            cooldown: 0,
+                            currentCooldown: 0,
+                            affectGCD: true,
+                            deadTargetEffect: 0,
+                            key: 52,
+                            use: (game, state) => {
+                                game.findEntityById(state.selectedEntityId).addHp(5)
+                            },
+                        }
+                    ],
+                },
+            },
+
+            computed: {
+
+                /* old selection
+                selectedAlly() {
+                    return this.allies[this.selected];
+                },
+                */
+
+                selectedEntity() {
+                    if (this.selected == this.player.id) {
+                        return this.player;
+                    } else {
+                        return this.allies[this.selected];
+                    }
+                },
+
+                currentCastLabel() {
+                    if (this.currentCast != -1) {
+                        return this.currentCastName //+ " " + this.currentCastTime;
+                    }
+                },
+
+            },
+
+            methods: {
+                onSpellHover(spell) {
+                    if (!spell.name) {
+                        return;
+                    }
+
+                    this.hover = true;
+                    this.hoveredSpell = spell;
+                },
+                onSpellLeave(spell) {
+                    if (this.hoveredSpell?.name == spell.name) {
+                        this.hover = false;
+                        this.hoveredSpell = null;
+                        this.holdClickHover = false;
+                    }
+                },
+
+                holdClickHoverOn() {
+                    if (this.hoveredSpell) {
+                        this.holdClickHover = true
+                    }
+                },
+
+                holdClickHoverOff() {
+                    this.holdClickHover = false
+                },
+
+                breakUseSpell() {
+                    clearTimeout(this.currentCast)
+                    this.currentCastAnim = -1
+                    this.currentCast = -1
+                    this.spellProgressBar = 0
+                    this.castbarBackground = 0
+                    this.currentCastName = null
+                    this.isPlayerCasting = false
+                    this.castTimeRemaining = 0
+                },
+
+                addAlly() {
+                    this.allies.push({
+                        hp: Math.random() * 100,
+                        role: ["tank", "healer", "dps"][rand(0, 2)],
+                        id: ++this.globalIncrement,
+                        addHp: function (value) {
+                            this.hp = Math.max(0, Math.min(100, this.hp + value))
+                        },
+                    })
+                },
+
+
+                cooldownSubstract(spell) {
+                    setTimeout(() => {
+                        spell.currentCooldown -= 1000 / 20
+                        if (spell.currentCooldown > 0) {
+                            this.cooldownSubstract(spell)
+                        }
+                    }, 1000 / 20)
+                },
+
+                globalCooldownFunction() {
+                    this.underGCD = true
+                    this.remainGCD = this.globalCooldown
+                    const darkmoon = () => {
+                        this.remainGCD -= 1000 / 60
+                        if (this.remainGCD > 0) {
+                            setTimeout(darkmoon, 1000 / 60);
+                        } else {
+                            this.remainGCD = null
+                            this.underGCD = false
+                        }
+                    }
+                    setTimeout(darkmoon, 1000 / 60);
+                },
+
+                /*cooldownSubstract(spells) {
+                    console.log(spells)
+                    for (let i = 0; i < spells.length; i++) {
+                        console.log(spells[i].cooldown)
+                        let state = true
+                        while (state) {
+                            spells[i].currentCooldown -= 1000
+                            if (spells[i].currentCooldown > 0) {
+                                cooldownSubstract()
+                            }
+                            if (spells[i].currentCooldown = 0) {
+                                state=false
+                            }
+                        }
+                    }
+                }, */
+
+                /* old id finder
+                findAllyById(id) {
+                    for (const ally of this.allies) {
+                        if (ally.id == id) {
+                            return ally;
+                        }
+                    }
+
+                    return null;
+                }, */
+
+
+                findEntityById(id) {
+                    if (id == this.player.id) {
+                        return this.player
+                    } else {
+                        for (const ally of this.allies) {
+                            if (ally.id == id) {
+                                return ally;
+                            }
+                        }
+
+                        return null;
+                    }
+                },
+
+                formatHpLabel(ally) {
+                    if (ally.hp <= 0) {
+                        return "dead"
+                    }
+
+                    return Math.ceil(ally.hp) + '%'
+                },
+
+                addSpell() {
+                    this.spells.push({})
+                },
+
+                playerSetMaxMana() {
+                    this.player.mana = 100
+                },
+
+                playerSetMinMana() {
+                    this.player.mana = 0
+                },
+
+                selectClass(clazz) {
+                    this.spells.length = 0;
+
+                    for (const spell of this.spellPool[clazz]) {
+                        this.spells.push({
+                            ...spell,
+                        });
+                    }
+
+                    const totalspells = 24 - this.spells.length
+                    for (let i = 0; i < totalspells; i++) {
+                        this.addSpell()
+                    }
+                },
+
+                useSpell(spell) {
+                    if (spell.currentCooldown <= 0 || this.player.mana - spell.mana >= 0) {
+                        if (!spell.canalised) {
+                            if (spell.incantTime <= 1000) {
+                                this.chainSpellDelayBeforeEnd = spell.incantTime * 0.5
+                            }
+                            this.breakIncantation = 0
+                            if (this.isPlayerCasting && this.castTimeRemaining > this.chainSpellDelayBeforeEnd) { // If it's a different spell, cancel the one currently being cast and cast the new one
+                                //this.breakIncantation = 1
+                                //this.breakUseSpell()
+                                return
+
+                            } else if (this.isPlayerCasting && this.castTimeRemaining <= this.chainSpellDelayBeforeEnd && !this.spellInQueue) { // ADD TO QUEUE (chain spell)
+                                if (!this.underGCD) {
+                                    this.spellInQueue = true
+                                    setTimeout(() => {
+                                        this.spellInQueue = false
+                                        this.useSpell(spell)
+                                    }, this.castTimeRemaining)
+                                    return
+                                } else if (this.underGCD && this.castTimeRemaining <= this.remainGCD + 25) {
+                                    this.spellInQueue = true
+                                    setTimeout(() => {
+                                        this.spellInQueue = false
+                                        this.useSpell(spell)
+                                    }, this.remainGCD + 25)
+                                    return
+                                } else { return }
+                            }
+                            if (this.isPlayerChanneling && this.castTimeRemaining) { //toDo : when Soothing Mist is channeled the monk can use some spells instantly
+                                this.breakChanneling = 1
+                                this.breakUseSpell()
+                                return
+                            }
+                            if (this.spellInQueue) { return }
+                            this.currentCastName = spell.name
+                            const selectedEntityId = this.selectedEntity.id
+                            if (spell.deadTargetEffect == 0) { // Verify if the spell is a healing spell or a battle rez one and then verify if the target can be heal / rez
+                                if (this.findEntityById(selectedEntityId).hp <= 0) { // healing spell (break if target is dead)
+                                    this.breakUseSpell()
+                                    return
+                                }
+                            } else {
+                                if (this.findEntityById(selectedEntityId).hp > 0) { // brez (break if target is alive)
+                                    this.breakUseSpell()
+                                    return
+                                }
+                            }
+                            if (spell.affectGCD) {
+                                this.globalCooldownFunction()
+                            }
+                            this.currentCast = setTimeout(() => {
+                                spell.use(this, {
+                                    selectedEntityId
+                                })
+                                this.breakUseSpell()
+                                return
+                            }, spell.incantTime)
+                            this.incantTotalTime = spell.incantTime;
+                            let remain = spell.incantTime;
+                            let whle = () => {
+                                if (this.breakIncantation == 1) { //break casting
+                                    this.breakIncantation = 0
+                                    this.breakUseSpell()
+                                    return
+                                }
+                                remain -= 1000 / 60
+                                this.castTimeRemaining = remain
+                                this.isPlayerCasting = true
+                                this.castbarBackground = 100
+                                this.currentCastTime = (remain / 1000 / 60)
+                                this.spellProgressBar = 100 - remain / spell.incantTime * 100
+                                if (this.player.mana - spell.mana < 0) {
+                                    this.breakUseSpell()
+                                    return
+                                }
+                                if (spell.deadTargetEffect == 0) {
+                                    if (this.findEntityById(selectedEntityId).hp <= 0) {
+                                        this.breakUseSpell()
+                                        return
+                                    }
+                                } /*else if (this.findEntityById(selectedEntityId).hp > 0) {
+                                     this.breakUseSpell()
+                                     return
+                                    } This part is broken, and a lil' bit useless*/
+
+                                if (remain > 0) {
+                                    this.currentCastAnim = setTimeout(whle, 1000 / 60);
+                                } else {
+                                    spell.currentCooldown = spell.cooldown
+                                    this.player.addMana(-spell.mana)
+                                    this.currentCastAnim = -1
+                                    this.currentCast = -1
+                                    this.spellProgressBar = 0
+                                    this.castbarBackground = 0
+                                    this.currentCastName = null
+                                    this.isPlayerCasting = false
+                                    this.castTimeRemaining = 0
+                                    if (spell.cooldown > 0) {
+                                        this.cooldownSubstract(spell)
+                                    }
+                                    return
+                                }
+                            }
+                            this.currentCastAnim = setTimeout(whle, 1000 / 60);
+                        } else { // spell canalisé
+                            if (spell.incantTime <= 1000) {
+                                this.chainSpellDelayBeforeEnd = spell.incantTime * 0.5
+                            }
+                            this.breakIncantation = 0
+                            if (this.isPlayerCasting && this.castTimeRemaining > this.chainSpellDelayBeforeEnd) { // If it's a different spell, cancel the one currently being cast and cast the new one
+                                //this.breakIncantation = 1
+                                //this.breakUseSpell()
+                                return
+                            }
+                            if (this.isPlayerChanneling && this.castTimeRemaining) { //toDo : when Soothing Mist is channeled the monk can use some spells instantly
+                                this.breakChanneling = 1
+                                this.breakUseSpell()
+                                return
+                            }
+                            if (this.spellInQueue) { return }
+                            this.currentCastName = spell.name
+                            const selectedEntityId = this.selectedEntity.id
+                            if (spell.deadTargetEffect == 0) { // Verify if the spell is a healing spell or a battle rez one and then verify if the target can be heal / rez
+                                if (this.findEntityById(selectedEntityId).hp <= 0) { // healing spell (break if target is dead)
+                                    this.breakUseSpell()
+                                    return
+                                }
+                            } else {
+                                if (this.findEntityById(selectedEntityId).hp > 0) { // brez (break if target is alive)
+                                    this.breakUseSpell()
+                                    return
+                                }
+                            }
+                            if (spell.affectGCD) {
+                                this.globalCooldownFunction()
+                            }
+                            this.currentCast = setTimeout(() => {
+                                spell.use(this, {
+                                    selectedEntityId
+                                })
+                                this.breakUseSpell()
+                                return
+                            }, spell.incantTime)
+                            this.incantTotalTime = spell.incantTime;
+                            let remain = spell.incantTime;
+                            let whle = () => {
+                                if (this.breakIncantation == 1) { //break casting
+                                    this.breakIncantation = 0
+                                    this.breakUseSpell()
+                                    return
+                                }
+                                remain -= 1000 / 60
+                                this.castTimeRemaining = remain
+                                this.isPlayerCasting = true
+                                this.castbarBackground = 100
+                                this.currentCastTime = (remain / 1000 / 60)
+                                this.spellProgressBar = 100 - remain / spell.incantTime * 100
+                                if (this.player.mana - spell.mana < 0) {
+                                    this.breakUseSpell()
+                                    return
+                                }
+                                if (spell.deadTargetEffect == 0) {
+                                    if (this.findEntityById(selectedEntityId).hp <= 0) {
+                                        this.breakUseSpell()
+                                        return
+                                    }
+                                } /*else if (this.findEntityById(selectedEntityId).hp > 0) {
+                                     this.breakUseSpell()
+                                     return
+                                    } This part is broken, and a lil' bit useless*/
+
+                                if (remain > 0) {
+                                    this.currentCastAnim = setTimeout(whle, 1000 / 60);
+                                } else {
+                                    spell.currentCooldown = spell.cooldown
+                                    this.player.addMana(-spell.mana)
+                                    this.currentCastAnim = -1
+                                    this.currentCast = -1
+                                    this.spellProgressBar = 0
+                                    this.castbarBackground = 0
+                                    this.currentCastName = null
+                                    this.isPlayerCasting = false
+                                    this.castTimeRemaining = 0
+                                    if (spell.cooldown > 0) {
+                                        this.cooldownSubstract(spell)
+                                    }
+                                    return
+                                }
+                            }
+                            this.currentCastAnim = setTimeout(whle, 1000 / 60);
+                        }
+                    }
+                },
+            },
+
+            mounted() {
+
+                document.addEventListener("keydown", (event) => { // Detect if the pressed key is used by a spell, and if so, cast this spell
+                    if (this.keyPressed) return;
+                    this.keyPressed = true;
+                    for (const spell of this.spells) {
+                        if (spell.key == event.keyCode) {
+                            this.useSpell(spell)
+                            break
+                        }
+                    }
+
+
+                    if (event.keyCode == 27) { // esc key role --> break cast and if not casting target player
+                        if (this.castTimeRemaining > 0) {
+                            this.breakIncantation = 1
+                        } else {
+                            this.selected = -1
+                        }
+                    }
+                }, false);
+
+                document.addEventListener("keyup", (event) => {
+                    this.keyPressed = false;
+                }, false);
+
+                this.selectClass("Priest");
+
+                for (let i = 0; i < 10; i++) {
+                    this.addAlly();
+                }
+
+                let step = 0;
+
+                setInterval(() => {
+                    if (step % 45 == 0) {
+                        for (const ally of this.allies) {
+                            ally.addHp(-1)
+                        }
+                        this.player.addMana(this.manaRegen)
+                    }
+                    step++
+                }, 1000 / 60)
+            }
+
+        })
+    </script>
+</body>
+
+</html>
