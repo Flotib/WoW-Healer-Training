@@ -68,11 +68,13 @@
 
             <div class="pcastbar" :data-label="currentCastLabel">
                 <div class="castbarbg" :style="'width:'+castbarBackground+'%'"></div>
-                <div v-if="isPlayerCasting" class="castBarGlowing" :style="'left:'+spellProgressBar+'%'"></div>
-                <!-- ADD isPlayerChanneling !!!-->
+                <div v-if="isPlayerCasting || isPlayerChanneling" class="castBarGlowing"
+                    :style="'left:'+spellProgressBar+'%'"></div>
                 <div v-if="isPlayerCasting" class="chainIncantIndicator"
                     :style="'left:'+((incantTotalTime-chainSpellDelayBeforeEnd)/incantTotalTime*100)+'%'"></div>
-                <div class="pincantationtime" :style="'width:'+spellProgressBar+'%'"></div>
+                <div v-if="isPlayerChanneling" v-for="i in channelTicks" class="ChannelTicksIndicator"
+                    :style="'left:'+(100/channelTicks*i)+'%'"></div>
+                <div :class="{ pincantationtime:isPlayerCasting, pincantationtimeChanneling:isPlayerChanneling }" :style="'width:'+spellProgressBar+'%'"></div>
             </div>
 
             <div class="spellbar">
@@ -82,7 +84,7 @@
                     @mousedown="holdClickHoverOn" @mouseup="holdClickHoverOff" @touchstart="holdClickHoverOn"
                     @touchend="holdClickHoverOff" @touchcancel="holdClickHoverOff">
                     <img v-if="spell.icon" :src="'img/spells/'+spell.icon+'.jpg'" />
-                    <div v-if="spell.icon && spell.mana>player.mana" class="notEnoughManaSpell"></div>
+                    <div v-if="spell.icon && (spell.mana>player.mana || spell.manapersecond>player.mana)" class="notEnoughManaSpell"></div>
                     <!-- Sometimes the :hover on the css takes some times to appear after holdClickHoverHold event -->
                     <div :class="{spellHover:!holdClickHover}"></div>
                     <div :class="{spellHoverClickHold:holdClickHover}"></div>
@@ -121,10 +123,9 @@
                     {{ hoveredSpell.tooltip }}
                 </div>
             </div>
-
         </div>
-
     </div>
+
     <script>
         function rand(min, max) { // min and max included 
             return Math.floor(Math.random() * (max - min + 1) + min);
@@ -238,7 +239,7 @@
                         },
                         {
                             name: "Soothing Mist",
-                            mana: this.player,
+                            mana: 0,
                             manapersecond: 0.4,
                             tooltip: "Heals the target for (440% of Spell power) over " + (8000 / 1000) + " sec.  While channeling, Enveloping Mist and Vivify may be cast instantly on the target.", // (295% of Spell power).",
                             icon: "ability_monk_soothingmists",
@@ -327,6 +328,7 @@
                     this.currentCastAnim = -1
                     this.castbarBackground = 0
                     this.castTimeRemaining = 0
+                    this.spellProgressBar = 0
                 },
 
                 addAlly() {
@@ -444,7 +446,7 @@
                 },
 
                 useSpell(spell) {
-                    if (spell.currentCooldown <= 0 || this.player.mana - spell.mana >= 0) {
+                    if (spell.currentCooldown <= 0 && this.player.mana - spell.mana >= 0 && this.player.mana - spell.manapersecond >= 0) {
                         if (!spell.channeled) {
                             if (spell.incantTime <= 1000) {
                                 this.chainSpellDelayBeforeEnd = spell.incantTime * 0.5
@@ -476,6 +478,7 @@
                             if (!this.underGCD) { // verify if there is the GCD
                                 if (this.isPlayerChanneling) { //toDo : when Soothing Mist is channeled the monk can use some spells instantly
                                     this.breakChanneling = 1
+                                    this.isPlayerChanneling = false
                                     this.castTimeRemaining = 0
                                 }
                                 if (this.spellInQueue) { return }
@@ -502,6 +505,10 @@
                                 let remain = spell.incantTime;
                                 let whle = () => {
                                     if (this.breakIncantation == 1) { //break casting
+                                        this.breakIncantation = 0
+                                        this.breakSpellAnimation()
+                                        return
+                                    } else if (this.breakIncantation == 2) { //escape key
                                         this.breakIncantation = 0
                                         this.breakUseSpell()
                                         return
@@ -557,6 +564,7 @@
                                 if (spell.name == this.currentCastName) {
                                     this.breakChanneling = 1
                                 }
+                                if (this.isPlayerCasting) { return }
                                 this.currentCastName = spell.name
                                 const selectedEntityId = this.selectedEntity.id
                                 if (spell.deadTargetEffect == 0) { // verify if target is dead
@@ -577,6 +585,10 @@
                                     if (this.breakChanneling == 1) { //break casting
                                         this.breakChanneling = 0
                                         this.breakSpellAnimation()
+                                        return
+                                    } else if (this.breakChanneling == 2) { //escape key
+                                        this.breakChanneling = 0
+                                        this.breakUseSpell()
                                         return
                                     }
                                     remain -= 1000 / 60
@@ -640,8 +652,8 @@
 
                     if (event.keyCode == 27) { // esc key role --> break cast and if not casting target player
                         if (this.castTimeRemaining > 0) {
-                            this.breakIncantation = 1
-                            this.breakChanneling = 1
+                            this.breakIncantation = 2
+                            this.breakChanneling = 2
                         } else {
                             this.selected = -1
                         }
