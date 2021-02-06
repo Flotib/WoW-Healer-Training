@@ -22,8 +22,11 @@
             <div style="color: #b3b3b3; display: inline-block; margin-left: 10px;">
                 {{ selected ? selected : 'none' }}
             </div>
-            <div style="color: #b3b3b3; display: inline-block; margin-left: 10px;">
+            <div style="color: #e44f4f; display: inline-block; margin-left: 10px;">
                 {{ isPlayerCasting }}
+            </div>
+            <div style="color: #e4f079; display: inline-block; margin-left: 10px;">
+                {{ isPlayerChanneling }}
             </div>
             <div style="color: #b3b3b3; display: inline-block; margin-left: 10px;">
                 {{ keyPressed }}
@@ -66,6 +69,7 @@
             <div class="pcastbar" :data-label="currentCastLabel">
                 <div class="castbarbg" :style="'width:'+castbarBackground+'%'"></div>
                 <div v-if="isPlayerCasting" class="castBarGlowing" :style="'left:'+spellProgressBar+'%'"></div>
+                <!-- ADD isPlayerChanneling !!!-->
                 <div v-if="isPlayerCasting" class="chainIncantIndicator"
                     :style="'left:'+((incantTotalTime-chainSpellDelayBeforeEnd)/incantTotalTime*100)+'%'"></div>
                 <div class="pincantationtime" :style="'width:'+spellProgressBar+'%'"></div>
@@ -99,12 +103,16 @@
                 <div class="spellTooltipTitle">
                     {{ hoveredSpell.name }}
                 </div>
-                <div class="spellTooltipManaCost" v-if="hoveredSpell.mana>0">
+                <div class="spellTooltipManaCost" v-if="hoveredSpell.mana>0 && !hoveredSpell.channeled">
                     {{ hoveredSpell.mana }}% Mana
+                </div>
+                <div class="spellTooltipManaCost" v-if="hoveredSpell.manapersecond>0 && hoveredSpell.channeled">
+                    {{ hoveredSpell.manapersecond }}% Mana per second
                 </div>
                 <div class="spellTooltipCastTime">
                     <template v-if="hoveredSpell.incantTime>1">{{ hoveredSpell.incantTime/1000 }} sec cast</template>
-                    <template v-else-if="hoveredSpell.incantTime==0">Instant</template>
+                    <template v-else-if="hoveredSpell.incantTime==0 && !hoveredSpell.channeled">Instant</template>
+                    <template v-else-if="hoveredSpell.channeled">Channeled</template>
                     <div class="spellTooltipCooldown" v-if="hoveredSpell.cooldown>0">
                         {{ Number((hoveredSpell.cooldown/1000/60).toFixed(1)) }} min cooldown
                     </div>
@@ -137,13 +145,14 @@
                 breakIncantation: 0,
                 breakChanneling: 0,
                 castTimeRemaining: 0,
+                channelTicksInterval: null,
                 isPlayerCasting: false,
                 isPlayerChanneling: false,
                 hover: false,
                 hoveredSpell: null,
                 holdClickHover: false,
                 spellInQueue: false,
-                manaRegen: 0.5,
+                manaRegen: 0.25,
                 globalCooldown: 1500,
                 remainGCD: null,
                 underGCD: false,
@@ -178,7 +187,8 @@
                             icon: "spell_holy_flashheal",
                             incantTime: 1500,
                             channelTime: 0,
-                            canalised: false,
+                            channelTicks: 0,
+                            channeled: false,
                             cooldown: 0,
                             currentCooldown: 0,
                             affectGCD: true,
@@ -194,9 +204,10 @@
                             manapersecond: 0,
                             tooltip: "An efficient spell that heals an ally for", // (295% of Spell power).",
                             icon: "spell_holy_greaterheal",
-                            incantTime: 2500,
+                            incantTime: 2500, // -this.player.haste
                             channelTime: 0,
-                            canalised: false,
+                            channelTicks: 0,
+                            channeled: false,
                             cooldown: 0,
                             currentCooldown: 0,
                             affectGCD: true,
@@ -214,7 +225,8 @@
                             icon: "spell_nature_reincarnation",
                             incantTime: 2000,
                             channelTime: 0,
-                            canalised: false,
+                            channelTicks: 0,
+                            channeled: false,
                             cooldown: 600000,
                             currentCooldown: 0,
                             affectGCD: true,
@@ -226,13 +238,14 @@
                         },
                         {
                             name: "Soothing Mist",
-                            mana: 0,
+                            mana: this.player,
                             manapersecond: 0.4,
-                            tooltip: "Heals the target for (440% of Spell power) over 8 sec.  While channeling, Enveloping Mist and Vivify may be cast instantly on the target.", // (295% of Spell power).",
+                            tooltip: "Heals the target for (440% of Spell power) over " + (8000 / 1000) + " sec.  While channeling, Enveloping Mist and Vivify may be cast instantly on the target.", // (295% of Spell power).",
                             icon: "ability_monk_soothingmists",
                             incantTime: 0,
                             channelTime: 8000,
-                            canalised: true,
+                            channelTicks: 8, // 8:1 
+                            channeled: true,
                             cooldown: 0,
                             currentCooldown: 0,
                             affectGCD: true,
@@ -306,6 +319,13 @@
                     this.currentCastName = null
                     this.isPlayerCasting = false
                     this.isPlayerChanneling = false
+                    this.castTimeRemaining = 0
+                },
+
+                breakSpellAnimation() { // less instable than breakUseSpell
+                    clearTimeout(this.currentCast)
+                    this.currentCastAnim = -1
+                    this.castbarBackground = 0
                     this.castTimeRemaining = 0
                 },
 
@@ -425,11 +445,12 @@
 
                 useSpell(spell) {
                     if (spell.currentCooldown <= 0 || this.player.mana - spell.mana >= 0) {
-                        if (!spell.canalised) {
+                        if (!spell.channeled) {
                             if (spell.incantTime <= 1000) {
                                 this.chainSpellDelayBeforeEnd = spell.incantTime * 0.5
                             }
                             this.breakIncantation = 0
+                            this.breakChanneling = 0
                             if (this.isPlayerCasting && this.castTimeRemaining > this.chainSpellDelayBeforeEnd) { // If it's a different spell, cancel the one currently being cast and cast the new one
                                 //this.breakIncantation = 1
                                 //this.breakUseSpell()
@@ -453,10 +474,9 @@
                                 } else { return }
                             }
                             if (!this.underGCD) { // verify if there is the GCD
-                                if (this.isPlayerChanneling && this.castTimeRemaining) { //toDo : when Soothing Mist is channeled the monk can use some spells instantly
+                                if (this.isPlayerChanneling) { //toDo : when Soothing Mist is channeled the monk can use some spells instantly
                                     this.breakChanneling = 1
-                                    this.breakUseSpell()
-                                    return
+                                    this.castTimeRemaining = 0
                                 }
                                 if (this.spellInQueue) { return }
                                 if (spell.incantTime > 0) {
@@ -477,89 +497,7 @@
                                 if (spell.affectGCD) {
                                     this.globalCooldownFunction()
                                 }
-                                this.currentCast = setTimeout(() => {
-                                    spell.use(this, {
-                                        selectedEntityId
-                                    })
-                                    this.breakUseSpell()
-                                    return
-                                }, spell.incantTime)
-                                if (spell.incantTime > 0) {
-                                    this.incantTotalTime = spell.incantTime;
-                                    let remain = spell.incantTime;
-                                    let whle = () => {
-                                        if (this.breakIncantation == 1) { //break casting
-                                            this.breakIncantation = 0
-                                            this.breakUseSpell()
-                                            return
-                                        }
-                                        remain -= 1000 / 60
-                                        this.castTimeRemaining = remain
-                                        this.isPlayerCasting = true
-                                        this.castbarBackground = 100
-                                        this.currentCastTime = (remain / 1000 / 60)
-                                        this.spellProgressBar = 100 - remain / spell.incantTime * 100
-                                        if (this.player.mana - spell.mana < 0) {
-                                            this.breakUseSpell()
-                                            return
-                                        }
-                                        if (spell.deadTargetEffect == 0) {
-                                            if (this.findEntityById(selectedEntityId).hp <= 0) {
-                                                this.breakUseSpell()
-                                                return
-                                            }
-                                        } /*else if (this.findEntityById(selectedEntityId).hp > 0) {
-                                     this.breakUseSpell()
-                                     return
-                                    } This part is broken, and a lil' bit useless*/
-
-                                        if (remain > 0) {
-                                            this.currentCastAnim = setTimeout(whle, 1000 / 60);
-                                        } else {
-                                            spell.currentCooldown = spell.cooldown
-                                            this.player.addMana(-spell.mana)
-                                            this.currentCastAnim = -1
-                                            this.currentCast = -1
-                                            this.spellProgressBar = 0
-                                            this.castbarBackground = 0
-                                            this.currentCastName = null
-                                            this.isPlayerCasting = false
-                                            this.castTimeRemaining = 0
-                                            if (spell.cooldown > 0) {
-                                                this.cooldownSubstract(spell)
-                                            }
-                                            return
-                                        }
-                                    }
-                                    this.currentCastAnim = setTimeout(whle, 1000 / 60);
-                                }
-                            }
-                        }
-
-
-                        else { // spell canalisé
-                            this.breakChanneling = 0
-                            if (!this.underGCD) {
-                                this.currentCastName = spell.name
-                                const selectedEntityId = this.selectedEntity.id
-                                if (spell.deadTargetEffect == 0) { // verify if target is dead
-                                    if (this.findEntityById(selectedEntityId).hp <= 0) { // healing spell (break if target is dead)
-                                        this.breakUseSpell()
-                                        return
-                                    }
-                                }
-                                if (spell.affectGCD) {
-                                    this.globalCooldownFunction()
-                                }
-                                // timeout qui se répète à chaque tick
-                                    setTimeout(() => {
-                                    spell.use(this, {
-                                        selectedEntityId
-                                    })
-
-                                    this.breakUseSpell()
-                                    return
-                                }, spell.channelTime) // durée totale du channel
+                                this.currentCast = 1
                                 this.incantTotalTime = spell.incantTime;
                                 let remain = spell.incantTime;
                                 let whle = () => {
@@ -591,6 +529,7 @@
                                     if (remain > 0) {
                                         this.currentCastAnim = setTimeout(whle, 1000 / 60);
                                     } else {
+                                        spell.use(this, { selectedEntityId })
                                         spell.currentCooldown = spell.cooldown
                                         this.player.addMana(-spell.mana)
                                         this.currentCastAnim = -1
@@ -599,6 +538,79 @@
                                         this.castbarBackground = 0
                                         this.currentCastName = null
                                         this.isPlayerCasting = false
+                                        this.castTimeRemaining = 0
+                                        if (spell.cooldown > 0) {
+                                            this.cooldownSubstract(spell)
+                                        }
+                                        return
+                                    }
+                                }
+                                this.currentCastAnim = setTimeout(whle, 1000 / 60);
+                            }
+                        }
+
+
+                        else { // spell is channeled
+                            this.breakIncantation = 0
+                            this.breakChanneling = 0
+                            if (!this.underGCD) {
+                                if (spell.name == this.currentCastName) {
+                                    this.breakChanneling = 1
+                                }
+                                this.currentCastName = spell.name
+                                const selectedEntityId = this.selectedEntity.id
+                                if (spell.deadTargetEffect == 0) { // verify if target is dead
+                                    if (this.findEntityById(selectedEntityId).hp <= 0) { // healing spell (break if target is dead)
+                                        this.breakUseSpell()
+                                        return
+                                    }
+                                }
+                                if (spell.affectGCD) {
+                                    this.globalCooldownFunction()
+                                }
+                                this.currentCast = 1
+                                this.incantChannelTime = spell.channelTime;
+                                this.channelTicksInterval = spell.channelTime / spell.channelTicks // channeled ticks interval's now here
+                                let remain = spell.channelTime;
+                                let ticks = this.channelTicksInterval
+                                let whle = () => {
+                                    if (this.breakChanneling == 1) { //break casting
+                                        this.breakChanneling = 0
+                                        this.breakSpellAnimation()
+                                        return
+                                    }
+                                    remain -= 1000 / 60
+                                    ticks -= 1000 / 60
+                                    this.castTimeRemaining = remain
+                                    this.isPlayerChanneling = true
+                                    this.castbarBackground = 100
+                                    this.currentCastTime = (remain / 1000 / 60)
+                                    this.spellProgressBar = remain / spell.channelTime * 100
+                                    if (this.player.mana - spell.manapersecond < 0) {
+                                        this.breakUseSpell()
+                                        return
+                                    }
+                                    if (spell.deadTargetEffect == 0) {
+                                        if (this.findEntityById(selectedEntityId).hp <= 0) {
+                                            this.breakUseSpell()
+                                            return
+                                        }
+                                    }
+                                    if (ticks <= 0) {
+                                        spell.use(this, { selectedEntityId })
+                                        this.player.addMana(-spell.manapersecond)
+                                        ticks = this.channelTicksInterval
+                                    }
+                                    if (remain > 0) {
+                                        this.currentCastAnim = setTimeout(whle, 1000 / 60);
+                                    } else {
+                                        spell.currentCooldown = spell.cooldown
+                                        this.currentCastAnim = -1
+                                        this.currentCast = -1
+                                        this.spellProgressBar = 0
+                                        this.castbarBackground = 0
+                                        this.currentCastName = null
+                                        this.isPlayerChanneling = false
                                         this.castTimeRemaining = 0
                                         if (spell.cooldown > 0) {
                                             this.cooldownSubstract(spell)
@@ -629,6 +641,7 @@
                     if (event.keyCode == 27) { // esc key role --> break cast and if not casting target player
                         if (this.castTimeRemaining > 0) {
                             this.breakIncantation = 1
+                            this.breakChanneling = 1
                         } else {
                             this.selected = -1
                         }
