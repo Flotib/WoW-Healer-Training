@@ -283,15 +283,15 @@ html {
 .pcastbar .chainIncantIndicator {
     z-index: 2;
     position: absolute;
-    background-color: yellow;
+    background-color: #fffda0; /* yellow */
     width: 1px;
     height: 100%;
 }
 
-.pcastbar .ChannelTicksIndicator {
+.pcastbar .channelTicksIndicator {
     z-index: 2;
     position: absolute;
-    background-color: #fff;
+    background-color: #bfd1ffad; /* white */
     width: 1px;
     height: 100%;
 }

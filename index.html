@@ -16,7 +16,7 @@
         <button @click="playerSetMinMana">mana 0</button>
         <button @click="playerSetMaxMana">mana 100</button>
         <button @click="player.addMana(-10)">Mana -10</button>
-        <input v-model="manaRegen" id="number" type="number" style="width: 35px;">
+        <!--<input v-model="manaRegen" id="number" type="number" style="width: 35px;">-->
         <div style="color: white; display: inline-block;">
             {{ selectedEntity ? selectedEntity.id : 'none' }}
             <div style="color: #b3b3b3; display: inline-block; margin-left: 10px;">
@@ -72,9 +72,10 @@
                     :style="'left:'+spellProgressBar+'%'"></div>
                 <div v-if="isPlayerCasting" class="chainIncantIndicator"
                     :style="'left:'+((incantTotalTime-chainSpellDelayBeforeEnd)/incantTotalTime*100)+'%'"></div>
-                <div v-if="isPlayerChanneling" v-for="i in channelTicks" class="ChannelTicksIndicator"
-                    :style="'left:'+(100/channelTicks*i)+'%'"></div>
-                <div :class="{ pincantationtime:isPlayerCasting, pincantationtimeChanneling:isPlayerChanneling }" :style="'width:'+spellProgressBar+'%'"></div>
+                <div v-if="isPlayerChanneling" class="channelTicksIndicator" v-for="i in spellchannelTicks"
+                    :style="'right:'+(100/spellchannelTicks*i)+'%'"></div>
+                <div :class="{ pincantationtime:isPlayerCasting, pincantationtimeChanneling:isPlayerChanneling }"
+                    :style="'width:'+spellProgressBar+'%'"></div>
             </div>
 
             <div class="spellbar">
@@ -84,7 +85,8 @@
                     @mousedown="holdClickHoverOn" @mouseup="holdClickHoverOff" @touchstart="holdClickHoverOn"
                     @touchend="holdClickHoverOff" @touchcancel="holdClickHoverOff">
                     <img v-if="spell.icon" :src="'img/spells/'+spell.icon+'.jpg'" />
-                    <div v-if="spell.icon && (spell.mana>player.mana || spell.manapersecond>player.mana)" class="notEnoughManaSpell"></div>
+                    <div v-if="spell.icon && (spell.mana>player.mana || spell.manapersecond>player.mana)"
+                        class="notEnoughManaSpell"></div>
                     <!-- Sometimes the :hover on the css takes some times to appear after holdClickHoverHold event -->
                     <div :class="{spellHover:!holdClickHover}"></div>
                     <div :class="{spellHoverClickHold:holdClickHover}"></div>
@@ -158,6 +160,7 @@
                 remainGCD: null,
                 underGCD: false,
                 chainSpellDelayBeforeEnd: 600,
+                spellchannelTicks: 0,
                 allies: [
                 ],
                 player: {
@@ -357,7 +360,7 @@
                     this.remainGCD = this.globalCooldown
                     const darkmoon = () => {
                         this.remainGCD -= 1000 / 60
-                        if (this.remainGCD > 0) {
+                        if (Math.round(this.remainGCD) > 0) {
                             setTimeout(darkmoon, 1000 / 60);
                         } else {
                             this.remainGCD = null
@@ -533,7 +536,7 @@
                                      return
                                     } This part is broken, and a lil' bit useless*/
 
-                                    if (remain > 0) {
+                                    if (Math.round(remain) > 0) {
                                         this.currentCastAnim = setTimeout(whle, 1000 / 60);
                                     } else {
                                         spell.use(this, { selectedEntityId })
@@ -594,6 +597,7 @@
                                     remain -= 1000 / 60
                                     ticks -= 1000 / 60
                                     this.castTimeRemaining = remain
+                                    this.spellchannelTicks = spell.channelTicks
                                     this.isPlayerChanneling = true
                                     this.castbarBackground = 100
                                     this.currentCastTime = (remain / 1000 / 60)
@@ -608,12 +612,12 @@
                                             return
                                         }
                                     }
-                                    if (ticks <= 0) {
+                                    if (Math.round(ticks) <= 0) { // round to avoid a value like 8.0e-13 =)
                                         spell.use(this, { selectedEntityId })
                                         this.player.addMana(-spell.manapersecond)
-                                        ticks = this.channelTicksInterval
+                                        ticks = this.channelTicksInterval-1000/60
                                     }
-                                    if (remain > 0) {
+                                    if (Math.round(remain) > 0) {
                                         this.currentCastAnim = setTimeout(whle, 1000 / 60);
                                     } else {
                                         spell.currentCooldown = spell.cooldown
