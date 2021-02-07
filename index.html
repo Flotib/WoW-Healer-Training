@@ -57,7 +57,8 @@
                 <div v-for="(ally,index) in allies" :key="index" :class="'allyhpbar' +(selected==index?' selected':'')"
                     :data-label="formatHpLabel(ally)" @click="()=>selected=index">
                     <span class="allyhpvalue" :style="'width:'+Math.max(0,ally.hp)+'%'"></span>
-                    <span v-if="ally.hpShield > 0" class="shieldBar" :style="'width:'+Math.max(0,ally.hpShield)+'%'"></span>
+                    <span v-if="ally.hpShield > 0" class="shieldBar"
+                        :style="'width:'+Math.max(0,ally.hpShield)+'%'"></span>
                     <span class="role"><img :src="'img/roles/'+ally.role+'.png'" /></span>
                 </div>
             </div>
@@ -130,7 +131,8 @@
                     </div>
                 </div>
                 <div class="spellTooltipDesc">
-                    {{ hoveredSpell.tooltip.replace('#channeltime', Number((hoveredSpell.channelTime/1000).toFixed(2))) }}
+                    {{ hoveredSpell.tooltip.replace('#channeltime', Number((hoveredSpell.channelTime/1000).toFixed(2)))
+                    }}
                 </div>
             </div>
         </div>
@@ -277,8 +279,8 @@
                             baseIncantTime: 0,
                             incantTime: 0,
                             baseChannelTime: 8000,
-                            channelTime: 8000, // /(1+this.player.haste/100)
-                            channelTicks: 8, // 8:1 
+                            channelTime: 8000,
+                            channelTicks: 8,
                             channeled: true,
                             cooldown: 0,
                             currentCooldown: 0,
@@ -298,22 +300,22 @@
                             baseIncantTime: 0,
                             incantTime: 0,
                             baseChannelTime: 0,
-                            channelTime: 0, // /(1+this.player.haste/100)
-                            channelTicks: 0, // 8:1 
+                            channelTime: 0,
+                            channelTicks: 0,
                             channeled: false,
                             cooldown: 0,
                             currentCooldown: 0,
                             affectGCD: true,
                             deadTargetEffect: 0,
                             key: 53,
-                            buff: 1, // good way to do this sh*t --> get buff by id and add buff to target when you ended cast the spell cast. The shield must be on the buff, not the entity :/
+                            effect: 1, // good way to do this sh*t --> get buff by id and add buff to target when you ended cast the spell cast. The shield must be on the buff, not the entity :/
                             use: (game, state) => {
                                 game.findEntityById(state.selectedEntityId).addShield(5) // need to change that later
                             },
                         },
                     ],
                 },
-                buff: [ // not final, still thinking about how I can do this simply without reworking all my code
+                effects: [ // not final, still thinking about how I can do this simply without reworking all my code
                     {
                         id: 1,
                         name: "test",
@@ -322,7 +324,7 @@
                         effect: null,
                         effectTwo: null,
                         duration: 15000,
-                        ticks: null,
+                        ticks: null, // time between every effect if the effect trigger something multiple times
                         tooltip: "test",
                         icon: null,
                     },
@@ -355,7 +357,7 @@
                     this.hover = true;
                     this.hoveredSpell = spell;
                 },
-                
+
                 onSpellLeave(spell) {
                     if (this.hoveredSpell?.name == spell.name) {
                         this.hover = false;
