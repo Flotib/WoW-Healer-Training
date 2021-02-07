@@ -57,6 +57,7 @@
                 <div v-for="(ally,index) in allies" :key="index" :class="'allyhpbar' +(selected==index?' selected':'')"
                     :data-label="formatHpLabel(ally)" @click="()=>selected=index">
                     <span class="allyhpvalue" :style="'width:'+Math.max(0,ally.hp)+'%'"></span>
+                    <span v-if="ally.hpShield > 0" class="shieldBar" :style="'width:'+Math.max(0,ally.hpShield)+'%'"></span>
                     <span class="role"><img :src="'img/roles/'+ally.role+'.png'" /></span>
                 </div>
             </div>
@@ -94,7 +95,6 @@
                     <img v-if="spell.icon" :src="'img/spells/'+spell.icon+'.jpg'" />
                     <div v-if="spell.icon && (spell.mana>player.mana || spell.manapersecond>player.mana)"
                         class="notEnoughManaSpell"></div>
-                    <!-- Sometimes the :hover on the css takes some times to appear after holdClickHoverHold event -->
                     <div :class="{spellHover:!holdClickHover}"></div>
                     <div :class="{spellHoverClickHold:holdClickHover}"></div>
                     <div v-if="spell.currentCooldown != 0" class="spellCooldownBackground"
@@ -130,7 +130,7 @@
                     </div>
                 </div>
                 <div class="spellTooltipDesc">
-                    {{ hoveredSpell.tooltip }}
+                    {{ hoveredSpell.tooltip.replace('#channeltime', Number((hoveredSpell.channelTime/1000).toFixed(2))) }}
                 </div>
             </div>
         </div>
@@ -272,7 +272,7 @@
                             name: "Soothing Mist",
                             mana: 0,
                             manapersecond: 0.4,
-                            tooltip: "Heals the target for (440% of Spell power) over " + 8 + " sec.  While channeling, Enveloping Mist and Vivify may be cast instantly on the target.",
+                            tooltip: "Heals the target for (440% of Spell power) over #channeltime sec.  While channeling, Enveloping Mist and Vivify may be cast instantly on the target.",
                             icon: "ability_monk_soothingmists",
                             baseIncantTime: 0,
                             incantTime: 0,
@@ -306,22 +306,30 @@
                             affectGCD: true,
                             deadTargetEffect: 0,
                             key: 53,
+                            buff: 1, // good way to do this sh*t --> get buff by id and add buff to target when you ended cast the spell cast. The shield must be on the buff, not the entity :/
                             use: (game, state) => {
                                 game.findEntityById(state.selectedEntityId).addShield(5) // need to change that later
                             },
                         },
                     ],
                 },
+                buff: [ // not final, still thinking about how I can do this simply without reworking all my code
+                    {
+                        id: 1,
+                        name: "test",
+                        buff: true,
+                        debuff: false,
+                        effect: null,
+                        effectTwo: null,
+                        duration: 15000,
+                        ticks: null,
+                        tooltip: "test",
+                        icon: null,
+                    },
+                ],
             },
 
             computed: {
-
-                /* old selection
-                selectedAlly() {
-                    return this.allies[this.selected];
-                },
-                */
-
                 selectedEntity() {
                     if (this.selected == this.player.id) {
                         return this.player;
@@ -347,6 +355,7 @@
                     this.hover = true;
                     this.hoveredSpell = spell;
                 },
+                
                 onSpellLeave(spell) {
                     if (this.hoveredSpell?.name == spell.name) {
                         this.hover = false;
@@ -413,7 +422,6 @@
                     })
                 },
 
-
                 cooldownSubstract(spell) {
                     setTimeout(() => {
                         spell.currentCooldown -= 1000 / 20
@@ -437,35 +445,6 @@
                     }
                     setTimeout(darkmoon, 1000 / 60);
                 },
-
-                /*cooldownSubstract(spells) {
-                    console.log(spells)
-                    for (let i = 0; i < spells.length; i++) {
-                        console.log(spells[i].cooldown)
-                        let state = true
-                        while (state) {
-                            spells[i].currentCooldown -= 1000
-                            if (spells[i].currentCooldown > 0) {
-                                cooldownSubstract()
-                            }
-                            if (spells[i].currentCooldown = 0) {
-                                state=false
-                            }
-                        }
-                    }
-                }, */
-
-                /* old id finder
-                findAllyById(id) {
-                    for (const ally of this.allies) {
-                        if (ally.id == id) {
-                            return ally;
-                        }
-                    }
- 
-                    return null;
-                }, */
-
 
                 findEntityById(id) {
                     if (id == this.player.id) {
