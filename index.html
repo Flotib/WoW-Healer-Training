@@ -121,7 +121,8 @@
                     {{ hoveredSpell.manapersecond }}% Mana per second
                 </div>
                 <div class="spellTooltipCastTime">
-                    <template v-if="hoveredSpell.incantTime>1">{{ Number((hoveredSpell.incantTime/1000).toFixed(2)) }} sec cast</template>
+                    <template v-if="hoveredSpell.incantTime>1">{{ Number((hoveredSpell.incantTime/1000).toFixed(2)) }}
+                        sec cast</template>
                     <template v-else-if="hoveredSpell.incantTime==0 && !hoveredSpell.channeled">Instant</template>
                     <template v-else-if="hoveredSpell.channeled">Channeled</template>
                     <div class="spellTooltipCooldown" v-if="hoveredSpell.cooldown>0">
@@ -181,10 +182,23 @@
                         this.mana = Math.max(0, Math.min(100, this.mana + value))
                     },
                     addHp: function (value) {
-                        this.hp = Math.max(0, Math.min(100, this.hp + value))
+                        if (this.hpShield > 0 && value < 0) { // If the target have a shield and lose HP
+                            if (this.hpShield + value < 0) {
+                                value = value + this.hpShield
+                                this.hpShield = 0
+                                this.hp = Math.max(0, Math.min(100, this.hp + value))
+                            } else if (this.hpShield + value >= 0) {
+                                this.hpShield = Math.max(0, Math.min(100, this.hpShield + value))
+                            }
+                        } else { // If the target don't have shield and lose HP or have shield but get HP
+                            this.hp = Math.max(0, Math.min(100, this.hp + value))
+                        }
                     },
                     addShield: function (value) {
                         this.hpShield = Math.max(0, Math.min(100, this.hpShield + value))
+                    },
+                    setShield: function (value) { // set shield, because shield are not stackables if they come from the same spell /!\ need to add buff for that sh*t
+
                     },
                 },
                 spells: [
@@ -258,7 +272,7 @@
                             name: "Soothing Mist",
                             mana: 0,
                             manapersecond: 0.4,
-                            tooltip: "Heals the target for (440% of Spell power) over " + 8 + " sec.  While channeling, Enveloping Mist and Vivify may be cast instantly on the target.", // (295% of Spell power).",
+                            tooltip: "Heals the target for (440% of Spell power) over " + 8 + " sec.  While channeling, Enveloping Mist and Vivify may be cast instantly on the target.",
                             icon: "ability_monk_soothingmists",
                             baseIncantTime: 0,
                             incantTime: 0,
@@ -274,7 +288,28 @@
                             use: (game, state) => {
                                 game.findEntityById(state.selectedEntityId).addHp(5)
                             },
-                        }
+                        },
+                        {
+                            name: "Power Word: Shield",
+                            mana: 3.1,
+                            manapersecond: 0,
+                            tooltip: "Shields an ally for 15 sec, absorbing [Spell power * 1.65 * (1 + Versatility) * 1 * 1] damage.  You cannot shield the target again for 7.5 sec.",
+                            icon: "spell_holy_powerwordshield",
+                            baseIncantTime: 0,
+                            incantTime: 0,
+                            baseChannelTime: 0,
+                            channelTime: 0, // /(1+this.player.haste/100)
+                            channelTicks: 0, // 8:1 
+                            channeled: false,
+                            cooldown: 0,
+                            currentCooldown: 0,
+                            affectGCD: true,
+                            deadTargetEffect: 0,
+                            key: 53,
+                            use: (game, state) => {
+                                game.findEntityById(state.selectedEntityId).addShield(5) // need to change that later
+                            },
+                        },
                     ],
                 },
             },
@@ -353,10 +388,27 @@
                 addAlly() {
                     this.allies.push({
                         hp: Math.random() * 100,
+                        hpShield: 0,
                         role: ["tank", "healer", "dps"][rand(0, 2)],
                         id: ++this.globalIncrement,
                         addHp: function (value) {
-                            this.hp = Math.max(0, Math.min(100, this.hp + value))
+                            if (this.hpShield > 0 && value < 0) { // If the target have a shield and lose HP
+                                if (this.hpShield + value < 0) {
+                                    value = value + this.hpShield
+                                    this.hpShield = 0
+                                    this.hp = Math.max(0, Math.min(100, this.hp + value))
+                                } else if (this.hpShield + value >= 0) {
+                                    this.hpShield = Math.max(0, Math.min(100, this.hpShield + value))
+                                }
+                            } else { // If the target don't have shield and lose HP or have shield but get HP
+                                this.hp = Math.max(0, Math.min(100, this.hp + value))
+                            }
+                        },
+                        addShield: function (value) {
+                            this.hpShield = Math.max(0, Math.min(100, this.hpShield + value))
+                        },
+                        setShield: function (value) { // same as player
+
                         },
                     })
                 },
@@ -410,7 +462,7 @@
                             return ally;
                         }
                     }
-
+ 
                     return null;
                 }, */
 
@@ -435,6 +487,10 @@
                     }
 
                     return Math.ceil(ally.hp) + '%'
+                },
+
+                formatHpShieldTabel(ally) {
+
                 },
 
                 addSpell() {
