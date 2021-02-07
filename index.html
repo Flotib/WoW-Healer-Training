@@ -17,6 +17,7 @@
         <button @click="playerSetMaxMana">mana 100</button>
         <button @click="player.addMana(-10)">Mana -10</button>
         <!--<input v-model="manaRegen" id="number" type="number" style="width: 35px;">-->
+        <input v-model="player.haste" type="number" style="width: 50px; color: #2c1f3d" @input="hasteCalculation">
         <div style="color: white; display: inline-block;">
             {{ selectedEntity ? selectedEntity.id : 'none' }}
             <div style="color: #b3b3b3; display: inline-block; margin-left: 10px;">
@@ -42,6 +43,12 @@
             </div>
             <div style="color: #56ff5e; display: inline-block; margin-left: 10px;">
                 {{ Number((player.hp).toFixed(2)) }}
+            </div>
+            <div style="color: #ae7eec; display: inline-block; margin-left: 10px;">
+                {{ player.haste }}
+            </div>
+            <div style="color: #ffffff; display: inline-block; margin-left: 10px;">
+                {{ Number(globalCooldown.toFixed(2)) }}
             </div>
         </div>
 
@@ -70,8 +77,8 @@
                 <div class="castbarbg" :style="'width:'+castbarBackground+'%'"></div>
                 <div v-if="isPlayerCasting || isPlayerChanneling" class="castBarGlowing"
                     :style="'left:'+spellProgressBar+'%'"></div>
-                <div v-if="isPlayerCasting" class="chainIncantIndicator"
-                    :style="'left:'+((incantTotalTime-chainSpellDelayBeforeEnd)/incantTotalTime*100)+'%'"></div>
+                <div v-if="isPlayerCasting && incantTotalTime>=400" class="spellQueueIndicator"
+                    :style="'left:'+((incantTotalTime-spellQueueDelay)/incantTotalTime*100)+'%'"></div>
                 <div v-if="isPlayerChanneling" class="channelTicksIndicator" v-for="i in spellchannelTicks"
                     :style="'right:'+(100/spellchannelTicks*i)+'%'"></div>
                 <div :class="{ pincantationtime:isPlayerCasting, pincantationtimeChanneling:isPlayerChanneling }"
@@ -114,7 +121,7 @@
                     {{ hoveredSpell.manapersecond }}% Mana per second
                 </div>
                 <div class="spellTooltipCastTime">
-                    <template v-if="hoveredSpell.incantTime>1">{{ hoveredSpell.incantTime/1000 }} sec cast</template>
+                    <template v-if="hoveredSpell.incantTime>1">{{ Number((hoveredSpell.incantTime/1000).toFixed(2)) }} sec cast</template>
                     <template v-else-if="hoveredSpell.incantTime==0 && !hoveredSpell.channeled">Instant</template>
                     <template v-else-if="hoveredSpell.channeled">Channeled</template>
                     <div class="spellTooltipCooldown" v-if="hoveredSpell.cooldown>0">
@@ -159,7 +166,7 @@
                 globalCooldown: 1500,
                 remainGCD: null,
                 underGCD: false,
-                chainSpellDelayBeforeEnd: 600,
+                spellQueueDelay: 400,
                 spellchannelTicks: 0,
                 allies: [
                 ],
@@ -169,6 +176,7 @@
                     mana: 100,
                     id: -1,
                     spellPower: 100,
+                    haste: 0,
                     addMana: function (value) {
                         this.mana = Math.max(0, Math.min(100, this.mana + value))
                     },
@@ -182,24 +190,26 @@
                 spells: [
                 ],
                 spellPool: {
-                    Priest: [
+                    Priest: [ // Name of the class which have the following spells (for the moment there is only one class because the game isn't achieved yet, obviously)
                         {
-                            name: "Flash Heal",
-                            mana: 3.6,
-                            manapersecond: 0,
-                            tooltip: "A fast spell that heals an ally for", // (203% of Spell power).",
-                            icon: "spell_holy_flashheal",
-                            incantTime: 1500,
-                            channelTime: 0,
-                            channelTicks: 0,
-                            channeled: false,
-                            cooldown: 0,
-                            currentCooldown: 0,
-                            affectGCD: true,
+                            name: "Flash Heal", // Name of the spell
+                            mana: 3.6, // Mana used by the spell
+                            manapersecond: 0,  // Mana per second use by the spell, used only by channeled spells
+                            tooltip: "A fast spell that heals an ally for", // (203% of Spell power).",  // Tooltip of the spell which appear when the spell is hover
+                            icon: "spell_holy_flashheal", // Icon of the spell
+                            baseIncantTime: 1500, // Base spell incant time, this value never change and is used by some functions
+                            incantTime: 1500, // Actual incant time, by default it have the same value as the base one but it change depending of the player haste
+                            baseChannelTime: 0, // Same as baseIncantTime but for channeled spells
+                            channelTime: 0, // Channeling time
+                            channelTicks: 0, // How many time between every ticks in channeling to trigger the effect
+                            channeled: false, // false : the spell is a normal one (castable), true : the spell is a channeled one
+                            cooldown: 0, // The cooldown applied after the cast of the spell
+                            currentCooldown: 0, // Current cooldown, this value change if the spell have a cooldown, after it've been used
+                            affectGCD: true, // If using this spell affect the GCD
                             deadTargetEffect: 0, // 0 = false; 1 = true ==> if the spell is only usable on dead allies (only for battle rez, i think c:)
-                            key: 49,
-                            use: (game, state) => {
-                                game.findEntityById(state.selectedEntityId).addHp(15)
+                            key: 49, // Keybinding, should change in several updates, when I'll added the key on the spellbar, not on the spell itself
+                            use: (game, state) => { // Function of the spell when it is used
+                                game.findEntityById(state.selectedEntityId).addHp(15) // Here, the spell adds hp to the target
                             },
                         },
                         {
@@ -208,7 +218,9 @@
                             manapersecond: 0,
                             tooltip: "An efficient spell that heals an ally for", // (295% of Spell power).",
                             icon: "spell_holy_greaterheal",
-                            incantTime: 2500, // -this.player.haste
+                            baseIncantTime: 2500,
+                            incantTime: 2500,
+                            baseChannelTime: 0,
                             channelTime: 0,
                             channelTicks: 0,
                             channeled: false,
@@ -227,7 +239,9 @@
                             manapersecond: 0,
                             tooltip: "Returns the spirit to the body, restoring a dead target to life with 100% health. Castable in combat.",
                             icon: "spell_nature_reincarnation",
+                            baseIncantTime: 2000,
                             incantTime: 2000,
+                            baseChannelTime: 0,
                             channelTime: 0,
                             channelTicks: 0,
                             channeled: false,
@@ -244,10 +258,12 @@
                             name: "Soothing Mist",
                             mana: 0,
                             manapersecond: 0.4,
-                            tooltip: "Heals the target for (440% of Spell power) over " + (8000 / 1000) + " sec.  While channeling, Enveloping Mist and Vivify may be cast instantly on the target.", // (295% of Spell power).",
+                            tooltip: "Heals the target for (440% of Spell power) over " + 8 + " sec.  While channeling, Enveloping Mist and Vivify may be cast instantly on the target.", // (295% of Spell power).",
                             icon: "ability_monk_soothingmists",
+                            baseIncantTime: 0,
                             incantTime: 0,
-                            channelTime: 8000,
+                            baseChannelTime: 8000,
+                            channelTime: 8000, // /(1+this.player.haste/100)
                             channelTicks: 8, // 8:1 
                             channeled: true,
                             cooldown: 0,
@@ -433,6 +449,15 @@
                     this.player.mana = 0
                 },
 
+                hasteCalculation() {
+                    console.log(this.player.haste)
+                    for (const spell of this.spells) {
+                        spell.incantTime = spell.baseIncantTime / (1 + this.player.haste / 100)
+                        spell.channelTime = spell.baseChannelTime / (1 + this.player.haste / 100)
+                        this.globalCooldown = 1500 / (1 + this.player.haste / 100) // 1500 for baseGCD, if it cause problems later ==> create a var baseGCD in data
+                    }
+                },
+
                 selectClass(clazz) {
                     this.spells.length = 0;
 
@@ -451,17 +476,17 @@
                 useSpell(spell) {
                     if (spell.currentCooldown <= 0 && this.player.mana - spell.mana >= 0 && this.player.mana - spell.manapersecond >= 0) {
                         if (!spell.channeled) {
-                            if (spell.incantTime <= 1000) {
-                                this.chainSpellDelayBeforeEnd = spell.incantTime * 0.5
-                            }
+                            /*if (spell.incantTime <= 1000) {  // change the spellQueue delay if the spell incant time is lower than 1sec
+                                this.spellQueueDelay = spell.incantTime * 0.5
+                            }*/
                             this.breakIncantation = 0
                             this.breakChanneling = 0
-                            if (this.isPlayerCasting && this.castTimeRemaining > this.chainSpellDelayBeforeEnd) { // If it's a different spell, cancel the one currently being cast and cast the new one
+                            if (this.isPlayerCasting && this.castTimeRemaining > this.spellQueueDelay) { // If it's a different spell, cancel the one currently being cast and cast the new one
                                 //this.breakIncantation = 1
                                 //this.breakUseSpell()
                                 return
 
-                            } else if (this.isPlayerCasting && this.castTimeRemaining <= this.chainSpellDelayBeforeEnd && !this.spellInQueue) { // ADD TO QUEUE (chain spell)
+                            } else if (this.isPlayerCasting && this.castTimeRemaining <= this.spellQueueDelay && !this.spellInQueue) { // ADD TO QUEUE (chain spell)
                                 if (!this.underGCD) {
                                     this.spellInQueue = true
                                     setTimeout(() => {
@@ -615,7 +640,7 @@
                                     if (Math.round(ticks) <= 0) { // round to avoid a value like 8.0e-13 =)
                                         spell.use(this, { selectedEntityId })
                                         this.player.addMana(-spell.manapersecond)
-                                        ticks = this.channelTicksInterval-1000/60
+                                        ticks = this.channelTicksInterval - 1000 / 60
                                     }
                                     if (Math.round(remain) > 0) {
                                         this.currentCastAnim = setTimeout(whle, 1000 / 60);

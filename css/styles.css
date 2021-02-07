@@ -280,7 +280,7 @@ html {
     height: 100%;
 }
 
-.pcastbar .chainIncantIndicator {
+.pcastbar .spellQueueIndicator {
     z-index: 2;
     position: absolute;
     background-color: #fffda0; /* yellow */
