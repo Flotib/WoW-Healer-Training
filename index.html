@@ -223,8 +223,9 @@
                             name: "Flash Heal", // Name of the spell
                             mana: 3.6, // Mana used by the spell
                             manapersecond: 0,  // Mana per second use by the spell, used only by channeled spells
+                            baseHealAmount: 2.03, // Base heal amount, this value never change and is used by some functions
                             healAmount: 15, // Same value as spell.use if the spell addHp (used for the heal amount preview)
-                            tooltip: "A fast spell that heals an ally for", // (203% of Spell power).",  // Tooltip of the spell which appear when the spell is hover
+                            tooltip: "A fast spell that heals an ally for (203% of Spell power).",  // Tooltip of the spell which appear when the spell is hover
                             icon: "spell_holy_flashheal", // Icon of the spell
                             baseIncantTime: 1500, // Base spell incant time, this value never change and is used by some functions
                             incantTime: 1500, // Actual incant time, by default it have the same value as the base one but it change depending of the player haste
@@ -237,8 +238,8 @@
                             affectGCD: true, // If using this spell affect the GCD
                             deadTargetEffect: 0, // 0 = false; 1 = true ==> if the spell is only usable on dead allies (only for battle rez, i think c:)
                             key: 49, // Keybinding, should change in several updates, when I'll added the key on the spellbar, not on the spell itself
-                            use: (game, state) => { // Function of the spell when it is used
-                                game.findEntityById(state.selectedEntityId).addHp(15) // Here, the spell adds hp to the target
+                            use: function(game, state) {  // Function of the spell when it is used
+                                game.findEntityById(state.selectedEntityId).addHp(this.healAmount) // Here, the spell adds hp to the target
                             },
                         },
                         {
@@ -507,7 +508,15 @@
                 },
 
                 hasteCalculation() {
-                    console.log(this.player.haste)
+                    for (const spell of this.spells) {
+                        spell.incantTime = spell.baseIncantTime / (1 + this.player.haste / 100)
+                        spell.channelTime = spell.baseChannelTime / (1 + this.player.haste / 100)
+                        this.globalCooldown = 1500 / (1 + this.player.haste / 100) // 1500 for baseGCD, if it cause problems later ==> create a var baseGCD in data
+                    }
+                },
+
+                spellPowerCalculation() {
+                    console.log(this.player.spellPower)
                     for (const spell of this.spells) {
                         spell.incantTime = spell.baseIncantTime / (1 + this.player.haste / 100)
                         spell.channelTime = spell.baseChannelTime / (1 + this.player.haste / 100)
