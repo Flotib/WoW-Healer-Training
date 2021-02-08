@@ -57,6 +57,10 @@
                 <div v-for="(ally,index) in allies" :key="index" :class="'allyhpbar' +(selected==index?' selected':'')"
                     :data-label="formatHpLabel(ally)" @click="()=>selected=index">
                     <span class="allyhpvalue" :style="'width:'+Math.max(0,ally.hp)+'%'"></span>
+                    <span v-if="ally.incomingHeal == true && 100-ally.hp >= currentCastHeal" class="incomingHeal"
+                        :style="'width:'+Math.max(0, currentCastHeal)+'%'"></span>
+                    <span v-if="ally.incomingHeal == true && 100-ally.hp < currentCastHeal" class="incomingHeal"
+                        :style="'width:'+Math.max(0, 100-ally.hp)+'%'"></span>
                     <span v-if="ally.hpShield > 0" class="shieldBar"
                         :style="'width:'+Math.max(0,ally.hpShield)+'%'"></span>
                     <span class="role"><img :src="'img/roles/'+ally.role+'.png'" /></span>
@@ -69,6 +73,12 @@
             <div :class="'playerFrame' +(selected==player.id?' selected':'')" @click="()=>selected=player.id">
                 <div class="playerHPbar" :data-label="Number((player.hp).toFixed(1))+'%'">
                     <span class="playerHPbarContent" :style="'width:'+player.hp+'%'"></span>
+                    <span v-if="player.incomingHeal == true && 100-player.hp >= currentCastHeal" class="incomingHeal"
+                        :style="'width:'+Math.max(0, currentCastHeal)+'%'"></span>
+                    <span v-if="player.incomingHeal == true && 100-player.hp < currentCastHeal" class="incomingHeal"
+                        :style="'width:'+Math.max(0, 100-player.hp)+'%'"></span>
+                    <span v-if="player.hpShield > 0" class="shieldBar"
+                        :style="'width:'+Math.max(0,player.hpShield)+'%'"></span>
                 </div>
                 <div class="playerManabar" :data-label="Number((player.mana).toFixed(1))+'%'">
                     <span class="playerManabarContent" :style="'width:'+player.mana+'%'"></span>
@@ -152,6 +162,7 @@
                 currentCastAnim: -1,
                 currentCastName: null,
                 currentCastTime: null,
+                currentCastHeal: null,
                 spellProgressBar: 0,
                 castbarBackground: 0,
                 incantTotalTime: 0,
@@ -180,6 +191,7 @@
                     id: -1,
                     spellPower: 100,
                     haste: 0,
+                    incomingHeal: false,
                     addMana: function (value) {
                         this.mana = Math.max(0, Math.min(100, this.mana + value))
                     },
@@ -211,6 +223,7 @@
                             name: "Flash Heal", // Name of the spell
                             mana: 3.6, // Mana used by the spell
                             manapersecond: 0,  // Mana per second use by the spell, used only by channeled spells
+                            healAmount: 15, // Same value as spell.use if the spell addHp (used for the heal amount preview)
                             tooltip: "A fast spell that heals an ally for", // (203% of Spell power).",  // Tooltip of the spell which appear when the spell is hover
                             icon: "spell_holy_flashheal", // Icon of the spell
                             baseIncantTime: 1500, // Base spell incant time, this value never change and is used by some functions
@@ -232,6 +245,7 @@
                             name: "Heal",
                             mana: 2.4,
                             manapersecond: 0,
+                            healAmount: 30,
                             tooltip: "An efficient spell that heals an ally for", // (295% of Spell power).",
                             icon: "spell_holy_greaterheal",
                             baseIncantTime: 2500,
@@ -253,6 +267,7 @@
                             name: "Rebirth",
                             mana: 0,
                             manapersecond: 0,
+                            healAmount: 0,
                             tooltip: "Returns the spirit to the body, restoring a dead target to life with 100% health. Castable in combat.",
                             icon: "spell_nature_reincarnation",
                             baseIncantTime: 2000,
@@ -274,6 +289,7 @@
                             name: "Soothing Mist",
                             mana: 0,
                             manapersecond: 0.4,
+                            healAmount: 0,
                             tooltip: "Heals the target for (440% of Spell power) over #channeltime sec.  While channeling, Enveloping Mist and Vivify may be cast instantly on the target.",
                             icon: "ability_monk_soothingmists",
                             baseIncantTime: 0,
@@ -295,6 +311,7 @@
                             name: "Power Word: Shield",
                             mana: 3.1,
                             manapersecond: 0,
+                            healAmount: 0,
                             tooltip: "Shields an ally for 15 sec, absorbing [Spell power * 1.65 * (1 + Versatility) * 1 * 1] damage.  You cannot shield the target again for 7.5 sec.",
                             icon: "spell_holy_powerwordshield",
                             baseIncantTime: 0,
@@ -386,11 +403,13 @@
                     this.isPlayerCasting = false
                     this.isPlayerChanneling = false
                     this.castTimeRemaining = 0
+                    this.currentCastHeal = null
                 },
 
                 breakSpellAnimation() { // less instable than breakUseSpell
                     clearTimeout(this.currentCast)
                     this.currentCastAnim = -1
+                    this.currentCastHeal = null
                     this.castbarBackground = 0
                     this.castTimeRemaining = 0
                     this.spellProgressBar = 0
@@ -402,6 +421,7 @@
                         hpShield: 0,
                         role: ["tank", "healer", "dps"][rand(0, 2)],
                         id: ++this.globalIncrement,
+                        incomingHeal: false,
                         addHp: function (value) {
                             if (this.hpShield > 0 && value < 0) { // If the target have a shield and lose HP
                                 if (this.hpShield + value < 0) {
@@ -565,16 +585,22 @@
                                 if (spell.affectGCD) {
                                     this.globalCooldownFunction()
                                 }
+                                if (spell.healAmount > 0) {
+                                    this.currentCastHeal = spell.healAmount
+                                    this.findEntityById(selectedEntityId).incomingHeal = true
+                                }
                                 this.currentCast = 1
                                 this.incantTotalTime = spell.incantTime;
                                 let remain = spell.incantTime;
                                 let whle = () => {
                                     if (this.breakIncantation == 1) { //break casting
                                         this.breakIncantation = 0
+                                        this.findEntityById(selectedEntityId).incomingHeal = false
                                         this.breakSpellAnimation()
                                         return
                                     } else if (this.breakIncantation == 2) { //escape key
                                         this.breakIncantation = 0
+                                        this.findEntityById(selectedEntityId).incomingHeal = false
                                         this.breakUseSpell()
                                         return
                                     }
@@ -585,11 +611,13 @@
                                     this.currentCastTime = (remain / 1000 / 60)
                                     this.spellProgressBar = 100 - remain / spell.incantTime * 100
                                     if (this.player.mana - spell.mana < 0) {
+                                        this.findEntityById(selectedEntityId).incomingHeal = false
                                         this.breakUseSpell()
                                         return
                                     }
                                     if (spell.deadTargetEffect == 0) {
                                         if (this.findEntityById(selectedEntityId).hp <= 0) {
+                                            this.findEntityById(selectedEntityId).incomingHeal = false
                                             this.breakUseSpell()
                                             return
                                         }
@@ -606,6 +634,8 @@
                                         this.player.addMana(-spell.mana)
                                         this.currentCastAnim = -1
                                         this.currentCast = -1
+                                        this.currentCastHeal = null,
+                                            this.findEntityById(selectedEntityId).incomingHeal = false
                                         this.spellProgressBar = 0
                                         this.castbarBackground = 0
                                         this.currentCastName = null

@@ -495,7 +495,17 @@ html {
     position: relative;
     display: flex;
     background: #6abfe8;
-    background: linear-gradient(0deg, #6abfe8 0%, #3bcfff 50%, #6abfe8 100%);
+    background: linear-gradient(0deg, #3a88af 0%, #3bcfff 50%, #3a88af 100%); /* #3781a7 & #3bcfff */
+    height: 100%;
+    left: 0;
+}
+
+.incomingHeal {
+    z-index: 1;
+    position: relative;
+    display: flex;
+    background: #007500;
+    background: linear-gradient(0deg, #00750065 0%, #00b40065 50%, #00750065 100%);
     height: 100%;
     left: 0;
 }
