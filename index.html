@@ -84,7 +84,7 @@
                     <span v-if="player.incomingHeal == true && player.maxHp-player.hp < currentCastHeal"
                         class="incomingHeal" :style="'width:'+(player.maxHp-player.hp)/player.maxHp*100+'%'"></span>
                     <span v-if="player.hpShield > 0" class="shieldBar"
-                        :style="'width:'+0,player.hpShield/player.maxHp*100+'%'"></span>
+                        :style="'width:'+player.hpShield/player.maxHp*100+'%'"></span>
                 </div>
                 <div class="playerManabar" :data-label="Number((player.mana).toFixed(1))+'%'">
                     <span class="playerManabarContent" :style="'width:'+player.mana+'%'"></span>
