@@ -236,9 +236,6 @@
                     addShield: function (value) {
                         this.hpShield = this.hpShield + value
                     },
-                    setShield: function (value) { // set shield, because shield are not stackables if they come from the same spell /!\ need to add buff for that sh*t
-
-                    },
                 },
                 spells: [
                 ],
@@ -264,6 +261,8 @@
                             affectGCD: true, // If using this spell affect the GCD
                             deadTargetEffect: 0, // 0 = false; 1 = true ==> if the spell is only usable on dead allies (only for battle rez, i think c:)
                             key: 49, // Keybinding, should change in several updates, when I'll added the key on the spellbar, not on the spell itself
+                            applyStatus: null, // The status ID (buff or debuff) applied after the spell
+                            applyStatus2: null, // Same as applyStatus but if the spell trigger a supplement status
                             use: function (game, state) {  // Function of the spell when it is used
                                 game.findEntityById(state.selectedEntityId).addHp(this.effectAmount) // Here, the spell adds hp to the target
                             },
@@ -288,6 +287,8 @@
                             affectGCD: true,
                             deadTargetEffect: 0,
                             key: 50,
+                            applyStatus: null,
+                            applyStatus2: null,
                             use: function (game, state) {
                                 game.findEntityById(state.selectedEntityId).addHp(this.effectAmount)
                             },
@@ -312,6 +313,8 @@
                             affectGCD: true,
                             deadTargetEffect: 1,
                             key: 51,
+                            applyStatus: null,
+                            applyStatus2: null,
                             use: function (game, state) {
                                 game.findEntityById(state.selectedEntityId).addHpPercent(100)
                             },
@@ -336,6 +339,8 @@
                             affectGCD: true,
                             deadTargetEffect: 0,
                             key: 52,
+                            applyStatus: null,
+                            applyStatus2: null,
                             use: function (game, state) {
                                 game.findEntityById(state.selectedEntityId).addHp(this.effectAmount)
                             },
@@ -360,25 +365,34 @@
                             affectGCD: true,
                             deadTargetEffect: 0,
                             key: 53,
-                            effect: 1, // good way to do this sh*t --> get buff by id and add buff to target when you ended cast the spell cast. The shield must be on the buff, not the entity :/
+                            applyStatus: 1, // good way to do this sh*t --> get buff by id and add buff to target when you ended cast the spell cast. The shield must be on the buff, not the entity :/
+                            applyStatus2: null,
                             use: function (game, state) {
                                 game.findEntityById(state.selectedEntityId).addShield(this.effectAmount)
                             },
                         },
                     ],
                 },
-                effects: [ // not final, still thinking about how I can do this simply without reworking all my code
+                statusEffects: [ // not final, still thinking about how I can do this simply without reworking all my code
                     {
                         id: 1,
                         name: "test",
-                        buff: true,
-                        debuff: false,
-                        effect: null,
-                        effectTwo: null,
-                        duration: 15000,
-                        ticks: null, // time between every effect if the effect trigger something multiple times
+                        buff: true, // false if it's a debuff
+                        type: "magic",
+                        effect: 1000,
+                        effect2: null,
+                        endEffect: true,
+                        baseDuration: 5000,
+                        duration: 5000,
+                        ticks: 5, // number of times the effect is triggered. Null if the buff don't repeat the effect
                         tooltip: "test",
-                        icon: null,
+                        icon: "spell_holy_powerwordshield",
+                        applyEffect: function (game, state) {
+                            game.findEntityById(state.selectedEntityId).addHp(this.effect)
+                        },
+                        applyEndEffect: function (game, state) {
+                            game.findEntityById(state.selectedEntityId).addHpPercent(100)
+                        },
                     },
                 ],
             },
@@ -463,7 +477,7 @@
                             hp: Math.random() * 20000,
                             hpShield: 0,
                             role: desiredRole, //["tank", "healer", "dps"][rand(0, 2)],
-                            getProperRole : false,
+                            getProperRole: false,
                             id: ++this.globalIncrement,
                             incomingHeal: false,
                             addHp: function (value) {
@@ -496,9 +510,6 @@
                             addShield: function (value) {
                                 this.hpShield = this.hpShield + value
                             },
-                            setShield: function (value) { // same as player
-
-                            },
                         })
                     }
                 },
@@ -511,7 +522,7 @@
                                 ally.hp = 60000
                             } else {
                                 ally.maxHp = rand(3000, 3950) * 10
-                                ally.hp = Math.random() * 20000 //toDo : ally.maxHp -- math random for tests
+                                ally.hp = rand(1, ally.maxHp) //toDo : ally.maxHp -- math random for tests
                             }
                             ally.getProperRole = true
                         }
@@ -554,6 +565,16 @@
 
                         return null;
                     }
+                },
+
+                findStatusEffectById(id) {
+                    for (const statusEffect of this.statusEffects) {
+                        if (statusEffect.id == id) {
+                            return statusEffect;
+                        }
+                    }
+
+                    return null;
                 },
 
                 formatHpLabel(ally) {
@@ -722,12 +743,19 @@
                                         this.currentCastAnim = setTimeout(whle, 1000 / 60);
                                     } else {
                                         spell.use(this, { selectedEntityId })
+                                        if (spell.applyStatus != null) {
+                                            this.applyStatusEffect(this.findEntityById(selectedEntityId), this.findStatusEffectById(spell.applyStatus))
+
+                                            if (spell.applyStatus2 != null) {
+                                                this.applyStatusEffect(this.findEntityById(selectedEntityId), this.findStatusEffectById(spell.applyStatus2))
+                                            }
+                                        }
                                         spell.currentCooldown = spell.cooldown
                                         this.player.addMana(-spell.mana)
                                         this.currentCastAnim = -1
                                         this.currentCast = -1
-                                        this.currentCastHeal = null,
-                                            this.findEntityById(selectedEntityId).incomingHeal = false
+                                        this.currentCastHeal = null
+                                        this.findEntityById(selectedEntityId).incomingHeal = false
                                         this.spellProgressBar = 0
                                         this.castbarBackground = 0
                                         this.currentCastName = null
@@ -821,6 +849,34 @@
                                 this.currentCastAnim = setTimeout(whle, 1000 / 60);
                             }
                         }
+                    }
+                },
+
+                applyStatusEffect(target, effect) {
+                    let duration = effect.baseDuration
+                    let selectedEntityId = this.selectedEntity.id
+
+                    if (effect.ticks != null) {
+                        let ticksInterval = effect.duration / effect.ticks
+                        let elune = () => {
+                            console.log(duration)
+                            duration -= 1000 / 20
+                            ticksInterval -= 1000 / 20
+                            if (Math.round(ticksInterval) <= 0) {
+                                effect.applyEffect(this, { selectedEntityId })
+                                ticksInterval = effect.duration / effect.ticks - 1000 / 20
+                            }
+                            if (Math.round(duration) > 0) {
+                                setTimeout(elune, 1000 / 20)
+                            } else {
+                                effect.applyEndEffect(this, { selectedEntityId })
+                                return
+                            }
+                        }
+                        setTimeout(elune, 1000 / 20);
+
+                    } else {
+
                     }
                 },
             },
