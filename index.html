@@ -11,13 +11,17 @@
 
 <body>
     <div id="app">
-        <button @click="addAlly">debugspawn</button>
+        <button @click="debugSpawnAlly">debugspawn</button>
         <button @click="addSpell">debugaddspell</button>
         <button @click="playerSetMinMana">mana 0</button>
         <button @click="playerSetMaxMana">mana 100</button>
         <button @click="player.addMana(-10)">Mana -10</button>
         <!--<input v-model="manaRegen" id="number" type="number" style="width: 35px;">-->
-        <input v-model="player.haste" type="number" style="width: 50px; color: #2c1f3d" @input="hasteCalculation">
+        <input v-model="player.haste" type="number" style="width: 50px; color: #6d3fa8" @input="statsCalculation">
+        <input v-model="player.spellPower" type="number" style="width: 50px; color: #4289e6" @input="statsCalculation">
+        <input v-model="player.versatility" type="number" style="width: 50px; color: #26c033" @input="statsCalculation">
+        <input v-model="player.criticalStrike" type="number" style="width: 50px; color: #ff640a"
+            @input="statsCalculation">
         <div style="color: white; display: inline-block;">
             {{ selectedEntity ? selectedEntity.id : 'none' }}
             <div style="color: #b3b3b3; display: inline-block; margin-left: 10px;">
@@ -56,13 +60,15 @@
             <div class="allyframecontainer">
                 <div v-for="(ally,index) in allies" :key="index" :class="'allyhpbar' +(selected==index?' selected':'')"
                     :data-label="formatHpLabel(ally)" @click="()=>selected=index">
-                    <span class="allyhpvalue" :style="'width:'+Math.max(0,ally.hp)+'%'"></span>
-                    <span v-if="ally.incomingHeal == true && 100-ally.hp >= currentCastHeal" class="incomingHeal"
-                        :style="'width:'+Math.max(0, currentCastHeal)+'%'"></span>
-                    <span v-if="ally.incomingHeal == true && 100-ally.hp < currentCastHeal" class="incomingHeal"
-                        :style="'width:'+Math.max(0, 100-ally.hp)+'%'"></span>
+                    <!-- formatlittleHpLabel(ally) -->
+                    <div class="littleAllyHp">{{ formatlittleHpLabel(ally) }}</div>
+                    <span class="allyhpvalue" :style="'width:'+ally.hp/ally.maxHp*100+'%'"></span>
+                    <span v-if="ally.incomingHeal == true && ally.maxHp-ally.hp >= currentCastHeal" class="incomingHeal"
+                        :style="'width:'+currentCastHeal/ally.maxHp*100+'%'"></span>
+                    <span v-if="ally.incomingHeal == true && ally.maxHp-ally.hp < currentCastHeal" class="incomingHeal"
+                        :style="'width:'+(ally.maxHp-ally.hp)/ally.maxHp*100+'%'"></span>
                     <span v-if="ally.hpShield > 0" class="shieldBar"
-                        :style="'width:'+Math.max(0,ally.hpShield)+'%'"></span>
+                        :style="'width:'+ally.hpShield/ally.maxHp*100+'%'"></span>
                     <span class="role"><img :src="'img/roles/'+ally.role+'.png'" /></span>
                 </div>
             </div>
@@ -71,14 +77,15 @@
         <div class="playerInterface">
 
             <div :class="'playerFrame' +(selected==player.id?' selected':'')" @click="()=>selected=player.id">
-                <div class="playerHPbar" :data-label="Number((player.hp).toFixed(1))+'%'">
-                    <span class="playerHPbarContent" :style="'width:'+player.hp+'%'"></span>
-                    <span v-if="player.incomingHeal == true && 100-player.hp >= currentCastHeal" class="incomingHeal"
-                        :style="'width:'+Math.max(0, currentCastHeal)+'%'"></span>
-                    <span v-if="player.incomingHeal == true && 100-player.hp < currentCastHeal" class="incomingHeal"
-                        :style="'width:'+Math.max(0, 100-player.hp)+'%'"></span>
+                <div class="playerHPbar" :data-label="Number((player.hp/player.maxHp*100).toFixed(1))+'%'">
+                    <span class="playerHPbarContent" :style="'width:'+player.hp/player.maxHp*100+'%'"></span>
+                    <span v-if="player.incomingHeal == true && player.maxHp-player.hp >= currentCastHeal"
+                        class="incomingHeal" :style="'width:'+currentCastHeal/player.maxHp*100+'%'"></span>
+                    <span v-if="player.incomingHeal == true && player.maxHp-player.hp < currentCastHeal"
+                        class="incomingHeal"
+                        :style="'width:'+(player.maxHp-player.hp)/player.maxHp*100+'%'"></span>
                     <span v-if="player.hpShield > 0" class="shieldBar"
-                        :style="'width:'+Math.max(0,player.hpShield)+'%'"></span>
+                        :style="'width:'+0,player.hpShield/player.maxHp*100+'%'"></span>
                 </div>
                 <div class="playerManabar" :data-label="Number((player.mana).toFixed(1))+'%'">
                     <span class="playerManabarContent" :style="'width:'+player.mana+'%'"></span>
@@ -141,8 +148,10 @@
                     </div>
                 </div>
                 <div class="spellTooltipDesc">
-                    {{ hoveredSpell.tooltip.replace('#channeltime', Number((hoveredSpell.channelTime/1000).toFixed(2)))
-                    }}
+                    <template v-if="!hoveredSpell.channeled">{{ replaceTooltipString(hoveredSpell.tooltip,
+                        hoveredSpell.effectAmount) }}</template>
+                    <template v-else>{{ replaceTooltipString(hoveredSpell.tooltip, hoveredSpell.channelEffectAmount,
+                        hoveredSpell.channelTime) }}</template>
                 </div>
             </div>
         </div>
@@ -185,12 +194,15 @@
                 allies: [
                 ],
                 player: {
-                    hp: 10,
+                    maxHp: 35000,
+                    hp: 20000,
                     hpShield: 0,
                     mana: 100,
                     id: -1,
-                    spellPower: 100,
+                    spellPower: 1000,
                     haste: 0,
+                    versatility: 0,
+                    criticalStrike: 0,
                     incomingHeal: false,
                     addMana: function (value) {
                         this.mana = Math.max(0, Math.min(100, this.mana + value))
@@ -200,16 +212,30 @@
                             if (this.hpShield + value < 0) {
                                 value = value + this.hpShield
                                 this.hpShield = 0
-                                this.hp = Math.max(0, Math.min(100, this.hp + value))
+                                this.hp = Math.max(0, Math.min(this.maxHp, this.hp + value))
                             } else if (this.hpShield + value >= 0) {
-                                this.hpShield = Math.max(0, Math.min(100, this.hpShield + value))
+                                this.hpShield = Math.max(0, Math.min(this.maxHp, this.hpShield + value))
                             }
                         } else { // If the target don't have shield and lose HP or have shield but get HP
-                            this.hp = Math.max(0, Math.min(100, this.hp + value))
+                            this.hp = Math.max(0, Math.min(this.maxHp, this.hp + value))
+                        }
+                    },
+                    addHpPercent: function (value) {
+                        let finalValue = this.maxHp * value / 100
+                        if (this.hpShield > 0 && finalValue < 0) { // If the target have a shield and lose HP
+                            if (this.hpShield + finalValue < 0) {
+                                finalValue = finalValue + this.hpShield
+                                this.hpShield = 0
+                                this.hp = finalValue
+                            } else if (this.hpShield + value >= 0) {
+                                this.hpShield = this.hpShield + finalValue
+                            }
+                        } else { // If the target don't have shield and lose HP or have shield but get HP
+                            this.hp = finalValue
                         }
                     },
                     addShield: function (value) {
-                        this.hpShield = Math.max(0, Math.min(100, this.hpShield + value))
+                        this.hpShield = this.hpShield + value
                     },
                     setShield: function (value) { // set shield, because shield are not stackables if they come from the same spell /!\ need to add buff for that sh*t
 
@@ -223,52 +249,56 @@
                             name: "Flash Heal", // Name of the spell
                             mana: 3.6, // Mana used by the spell
                             manapersecond: 0,  // Mana per second use by the spell, used only by channeled spells
-                            baseHealAmount: 2.03, // Base heal amount, this value never change and is used by some functions
-                            healAmount: 15, // Same value as spell.use if the spell addHp (used for the heal amount preview)
-                            tooltip: "A fast spell that heals an ally for (203% of Spell power).",  // Tooltip of the spell which appear when the spell is hover
+                            baseEffectAmount: 2.03, // Base heal amount, this value never change and is used by some functions
+                            effectAmount: 2.03, // Same value as spell.use if the spell addHp (used for the heal amount preview)
+                            tooltip: "A fast spell that heals an ally for #spellpower.",  // Tooltip of the spell which appear when the spell is hover
                             icon: "spell_holy_flashheal", // Icon of the spell
                             baseIncantTime: 1500, // Base spell incant time, this value never change and is used by some functions
                             incantTime: 1500, // Actual incant time, by default it have the same value as the base one but it change depending of the player haste
                             baseChannelTime: 0, // Same as baseIncantTime but for channeled spells
                             channelTime: 0, // Channeling time
                             channelTicks: 0, // How many time between every ticks in channeling to trigger the effect
+                            channelEffectAmount: 0, // total heal amount from the channeling
                             channeled: false, // false : the spell is a normal one (castable), true : the spell is a channeled one
                             cooldown: 0, // The cooldown applied after the cast of the spell
                             currentCooldown: 0, // Current cooldown, this value change if the spell have a cooldown, after it've been used
                             affectGCD: true, // If using this spell affect the GCD
                             deadTargetEffect: 0, // 0 = false; 1 = true ==> if the spell is only usable on dead allies (only for battle rez, i think c:)
                             key: 49, // Keybinding, should change in several updates, when I'll added the key on the spellbar, not on the spell itself
-                            use: function(game, state) {  // Function of the spell when it is used
-                                game.findEntityById(state.selectedEntityId).addHp(this.healAmount) // Here, the spell adds hp to the target
+                            use: function (game, state) {  // Function of the spell when it is used
+                                game.findEntityById(state.selectedEntityId).addHp(this.effectAmount) // Here, the spell adds hp to the target
                             },
                         },
                         {
                             name: "Heal",
                             mana: 2.4,
                             manapersecond: 0,
-                            healAmount: 30,
-                            tooltip: "An efficient spell that heals an ally for", // (295% of Spell power).",
+                            baseEffectAmount: 2.95,
+                            effectAmount: 2.95,
+                            tooltip: "An efficient spell that heals an ally for #spellpower.",
                             icon: "spell_holy_greaterheal",
                             baseIncantTime: 2500,
                             incantTime: 2500,
                             baseChannelTime: 0,
                             channelTime: 0,
                             channelTicks: 0,
+                            channelEffectAmount: 0,
                             channeled: false,
                             cooldown: 0,
                             currentCooldown: 0,
                             affectGCD: true,
                             deadTargetEffect: 0,
                             key: 50,
-                            use: (game, state) => {
-                                game.findEntityById(state.selectedEntityId).addHp(30)
+                            use: function (game, state) {
+                                game.findEntityById(state.selectedEntityId).addHp(this.effectAmount)
                             },
                         },
                         {
                             name: "Rebirth",
                             mana: 0,
                             manapersecond: 0,
-                            healAmount: 0,
+                            baseEffectAmount: 0,
+                            effectAmount: 0,
                             tooltip: "Returns the spirit to the body, restoring a dead target to life with 100% health. Castable in combat.",
                             icon: "spell_nature_reincarnation",
                             baseIncantTime: 2000,
@@ -276,50 +306,55 @@
                             baseChannelTime: 0,
                             channelTime: 0,
                             channelTicks: 0,
+                            channelEffectAmount: 0,
                             channeled: false,
                             cooldown: 600000,
                             currentCooldown: 0,
                             affectGCD: true,
                             deadTargetEffect: 1,
                             key: 51,
-                            use: (game, state) => {
-                                game.findEntityById(state.selectedEntityId).addHp(100)
+                            use: function (game, state) {
+                                game.findEntityById(state.selectedEntityId).addHpPercent(100)
                             },
                         },
                         {
                             name: "Soothing Mist",
                             mana: 0,
                             manapersecond: 0.4,
-                            healAmount: 0,
-                            tooltip: "Heals the target for (440% of Spell power) over #channeltime sec.  While channeling, Enveloping Mist and Vivify may be cast instantly on the target.",
+                            baseEffectAmount: 0.55,
+                            effectAmount: 0.55,
+                            tooltip: "Heals the target for #spellpower over #channeltime sec.  While channeling, Enveloping Mist and Vivify may be cast instantly on the target.",
                             icon: "ability_monk_soothingmists",
                             baseIncantTime: 0,
                             incantTime: 0,
                             baseChannelTime: 8000,
                             channelTime: 8000,
                             channelTicks: 8,
+                            channelEffectAmount: 4.4,
                             channeled: true,
                             cooldown: 0,
                             currentCooldown: 0,
                             affectGCD: true,
                             deadTargetEffect: 0,
                             key: 52,
-                            use: (game, state) => {
-                                game.findEntityById(state.selectedEntityId).addHp(5)
+                            use: function (game, state) {
+                                game.findEntityById(state.selectedEntityId).addHp(this.effectAmount)
                             },
                         },
                         {
                             name: "Power Word: Shield",
                             mana: 3.1,
                             manapersecond: 0,
-                            healAmount: 0,
-                            tooltip: "Shields an ally for 15 sec, absorbing [Spell power * 1.65 * (1 + Versatility) * 1 * 1] damage.  You cannot shield the target again for 7.5 sec.",
+                            baseEffectAmount: 1.65,
+                            effectAmount: 1.65,
+                            tooltip: "Shields an ally for 15 sec, absorbing #spellpower damage.  You cannot shield the target again for 7.5 sec.",
                             icon: "spell_holy_powerwordshield",
                             baseIncantTime: 0,
                             incantTime: 0,
                             baseChannelTime: 0,
                             channelTime: 0,
                             channelTicks: 0,
+                            channelEffectAmount: 0,
                             channeled: false,
                             cooldown: 0,
                             currentCooldown: 0,
@@ -327,8 +362,8 @@
                             deadTargetEffect: 0,
                             key: 53,
                             effect: 1, // good way to do this sh*t --> get buff by id and add buff to target when you ended cast the spell cast. The shield must be on the buff, not the entity :/
-                            use: (game, state) => {
-                                game.findEntityById(state.selectedEntityId).addShield(5) // need to change that later
+                            use: function (game, state) {
+                                game.findEntityById(state.selectedEntityId).addShield(this.effectAmount)
                             },
                         },
                     ],
@@ -394,6 +429,12 @@
                     this.holdClickHover = false
                 },
 
+                replaceTooltipString(source, spellPowerValue, channelTimeValue) {
+                    source = source.replace('#spellpower', Number((spellPowerValue).toFixed(0)))
+                    source = source.replace('#channeltime', Number((channelTimeValue / 1000).toFixed(2)))
+                    return source
+                },
+
                 breakUseSpell() {
                     clearTimeout(this.currentCast)
                     this.currentCastAnim = -1
@@ -416,33 +457,62 @@
                     this.spellProgressBar = 0
                 },
 
-                addAlly() {
-                    this.allies.push({
-                        hp: Math.random() * 100,
-                        hpShield: 0,
-                        role: ["tank", "healer", "dps"][rand(0, 2)],
-                        id: ++this.globalIncrement,
-                        incomingHeal: false,
-                        addHp: function (value) {
-                            if (this.hpShield > 0 && value < 0) { // If the target have a shield and lose HP
-                                if (this.hpShield + value < 0) {
-                                    value = value + this.hpShield
-                                    this.hpShield = 0
-                                    this.hp = Math.max(0, Math.min(100, this.hp + value))
-                                } else if (this.hpShield + value >= 0) {
-                                    this.hpShield = Math.max(0, Math.min(100, this.hpShield + value))
+                addAlly(number, desiredRole) {
+                    for (let i = 0; i < number; i++) {
+                        this.allies.push({
+                            maxHp: 20000,
+                            hp: Math.random() * 20000,
+                            hpShield: 0,
+                            role: desiredRole, //["tank", "healer", "dps"][rand(0, 2)],
+                            id: ++this.globalIncrement,
+                            incomingHeal: false,
+                            addHp: function (value) {
+                                if (this.hpShield > 0 && value < 0) { // If the target have a shield and lose HP
+                                    if (this.hpShield + value < 0) {
+                                        value = value + this.hpShield
+                                        this.hpShield = 0
+                                        this.hp = Math.max(0, Math.min(this.maxHp, this.hp + value))
+                                    } else if (this.hpShield + value >= 0) {
+                                        this.hpShield = Math.max(0, Math.min(this.maxHp, this.hpShield + value))
+                                    }
+                                } else { // If the target don't have shield and lose HP or have shield but get HP
+                                    this.hp = Math.max(0, Math.min(this.maxHp, this.hp + value))
                                 }
-                            } else { // If the target don't have shield and lose HP or have shield but get HP
-                                this.hp = Math.max(0, Math.min(100, this.hp + value))
-                            }
-                        },
-                        addShield: function (value) {
-                            this.hpShield = Math.max(0, Math.min(100, this.hpShield + value))
-                        },
-                        setShield: function (value) { // same as player
+                            },
+                            addHpPercent: function (value) {
+                                let finalValue = this.maxHp * value / 100
+                                if (this.hpShield > 0 && finalValue < 0) { // If the target have a shield and lose HP
+                                    if (this.hpShield + finalValue < 0) {
+                                        finalValue = finalValue + this.hpShield
+                                        this.hpShield = 0
+                                        this.hp = finalValue
+                                    } else if (this.hpShield + value >= 0) {
+                                        this.hpShield = this.hpShield + finalValue
+                                    }
+                                } else { // If the target don't have shield and lose HP or have shield but get HP
+                                    this.hp = finalValue
+                                }
+                            },
+                            addShield: function (value) {
+                                this.hpShield = this.hpShield + value
+                            },
+                            setShield: function (value) { // same as player
 
-                        },
-                    })
+                            },
+                        })
+                    }
+                },
+
+                changeAllyHpByRole() {
+                    for (const ally of this.allies) {
+                        if (ally.role == "tank") {
+                            ally.maxHp = 60000
+                            ally.hp = 60000
+                        } else {
+                            ally.maxHp = rand(3000, 3950) * 10
+                            ally.hp = Math.random() * 20000 //toDo : ally.maxHp -- math random for tests
+                        }
+                    }
                 },
 
                 cooldownSubstract(spell) {
@@ -488,7 +558,15 @@
                         return "dead"
                     }
 
-                    return Math.ceil(ally.hp) + '%'
+                    return Math.ceil(ally.hp / ally.maxHp * 100) + '%'
+                },
+
+                formatlittleHpLabel(ally) { // toggle option later, show the real hp
+                    if (ally.hp <= 0) { // can also disable this if to show "0 / maxHp" which is pretty good looking
+                        return ""
+                    }
+
+                    return Math.ceil(ally.hp) + " / " + Math.ceil(ally.maxHp)
                 },
 
                 formatHpShieldTabel(ally) {
@@ -499,6 +577,11 @@
                     this.spells.push({})
                 },
 
+                debugSpawnAlly() {
+                    this.addAlly(1, ['tank', 'healer', 'dps'][rand(0, 2)])
+                    this.changeAllyHpByRole()
+                },
+
                 playerSetMaxMana() {
                     this.player.mana = 100
                 },
@@ -507,20 +590,17 @@
                     this.player.mana = 0
                 },
 
-                hasteCalculation() {
+                statsCalculation() {
                     for (const spell of this.spells) {
+                        //haste
                         spell.incantTime = spell.baseIncantTime / (1 + this.player.haste / 100)
                         spell.channelTime = spell.baseChannelTime / (1 + this.player.haste / 100)
                         this.globalCooldown = 1500 / (1 + this.player.haste / 100) // 1500 for baseGCD, if it cause problems later ==> create a var baseGCD in data
-                    }
-                },
-
-                spellPowerCalculation() {
-                    console.log(this.player.spellPower)
-                    for (const spell of this.spells) {
-                        spell.incantTime = spell.baseIncantTime / (1 + this.player.haste / 100)
-                        spell.channelTime = spell.baseChannelTime / (1 + this.player.haste / 100)
-                        this.globalCooldown = 1500 / (1 + this.player.haste / 100) // 1500 for baseGCD, if it cause problems later ==> create a var baseGCD in data
+                        //spellpower & versatility
+                        spell.effectAmount = Math.ceil(spell.baseEffectAmount * this.player.spellPower * (1 + this.player.versatility / 100))
+                        if (spell.channeled) {
+                            spell.channelEffectAmount = (spell.baseEffectAmount * this.player.spellPower) * spell.channelTicks
+                        }
                     }
                 },
 
@@ -594,8 +674,8 @@
                                 if (spell.affectGCD) {
                                     this.globalCooldownFunction()
                                 }
-                                if (spell.healAmount > 0) {
-                                    this.currentCastHeal = spell.healAmount
+                                if (spell.effectAmount > 0 && spell.baseIncantTime > 0) {
+                                    this.currentCastHeal = spell.effectAmount
                                     this.findEntityById(selectedEntityId).incomingHeal = true
                                 }
                                 this.currentCast = 1
@@ -771,16 +851,20 @@
 
                 this.selectClass("Priest");
 
-                for (let i = 0; i < 10; i++) {
-                    this.addAlly();
-                }
+                this.statsCalculation()
+
+                this.addAlly(2, "tank");
+                this.addAlly(2, "healer");
+                this.addAlly(10, "dps");
+
+                this.changeAllyHpByRole()
 
                 let step = 0;
 
                 setInterval(() => {
                     if (step % 45 == 0) {
                         for (const ally of this.allies) {
-                            ally.addHp(-1)
+                            ally.addHp(-ally.maxHp / 100)
                         }
                         this.player.addMana(this.manaRegen)
                     }
