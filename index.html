@@ -60,7 +60,15 @@
             <div class="allyframecontainer">
                 <div v-for="(ally,index) in allies" :key="index" :class="'allyhpbar' +(selected==index?' selected':'')"
                     :data-label="formatHpLabel(ally)" @click="()=>selected=index">
-                    <!-- formatlittleHpLabel(ally) -->
+                    <div class="statusEffectLittleFrame">
+                        <div v-for="(effect, index) in ally.activeEffects" :key="index"
+                            class="statusEffectLittleFrameIcon">
+                            <div class="statusEffectCooldown"
+                                :style="'background: conic-gradient(#14161bb0 '+(360*(1-effect.duration/effect.baseDuration))+'deg, transparent '+(360*(1-effect.duration/effect.baseDuration))+'deg);'">
+                            </div>
+                            <img :src="'img/spells/' + effect.icon + '.jpg'" />
+                        </div>
+                    </div>
                     <div class="littleAllyHp">{{ formatlittleHpLabel(ally) }}</div>
                     <span class="allyhpvalue" :style="'width:'+ally.hp/ally.maxHp*100+'%'"></span>
                     <span v-if="ally.incomingHeal == true && ally.maxHp-ally.hp >= currentCastHeal" class="incomingHeal"
@@ -78,6 +86,15 @@
 
             <div :class="'playerFrame' +(selected==player.id?' selected':'')" @click="()=>selected=player.id">
                 <div class="playerHPbar" :data-label="Number((player.hp/player.maxHp*100).toFixed(1))+'%'">
+                    <div class="statusEffectBigFrame">
+                        <div v-for="(effect, index) in player.activeEffects" :key="index"
+                            class="statusEffectBigFrameIcon">
+                            <div class="statusEffectCooldown"
+                                :style="'background: conic-gradient(#14161bb0 '+(360*(1-effect.duration/effect.baseDuration))+'deg, transparent '+(360*(1-effect.duration/effect.baseDuration))+'deg);'">
+                            </div>
+                            <img :src="'img/spells/' + effect.icon + '.jpg'" />
+                        </div>
+                    </div>
                     <span class="playerHPbarContent" :style="'width:'+player.hp/player.maxHp*100+'%'"></span>
                     <span v-if="player.incomingHeal == true && player.maxHp-player.hp >= currentCastHeal"
                         class="incomingHeal" :style="'width:'+currentCastHeal/player.maxHp*100+'%'"></span>
@@ -160,6 +177,19 @@
         function rand(min, max) { // min and max included 
             return Math.floor(Math.random() * (max - min + 1) + min);
         }
+
+        Array.prototype.removeIf = function (callback) {
+            var i = 0;
+            while (i < this.length) {
+                if (callback(this[i], i)) {
+                    this.splice(i, 1);
+                }
+                else {
+                    ++i;
+                }
+            }
+        }
+
         var app = new Vue({
             el: '#app',
             data: {
@@ -184,7 +214,7 @@
                 hoveredSpell: null,
                 holdClickHover: false,
                 spellInQueue: false,
-                manaRegen: 0.25,
+                manaRegen: 0.8, // 100 * 0.008
                 globalCooldown: 1500,
                 remainGCD: null,
                 underGCD: false,
@@ -203,6 +233,7 @@
                     versatility: 0,
                     criticalStrike: 0,
                     incomingHeal: false,
+                    activeEffects: [],
                     addMana: function (value) {
                         this.mana = Math.max(0, Math.min(100, this.mana + value))
                     },
@@ -375,10 +406,10 @@
                 },
                 statusEffects: [ // not final, still thinking about how I can do this simply without reworking all my code
                     {
-                        id: 1,
-                        name: "test",
-                        buff: true, // false if it's a debuff
-                        type: "magic",
+                        id: 1, // id of the status effect
+                        name: "test", // its name
+                        buff: true, // false if it's a debuff, used to change the border color
+                        type: "magic", // curse, disease, magic, poison --> for dispelling
                         effect: 1000,
                         effect2: null,
                         endEffect: true,
@@ -480,6 +511,7 @@
                             getProperRole: false,
                             id: ++this.globalIncrement,
                             incomingHeal: false,
+                            activeEffects: [],
                             addHp: function (value) {
                                 if (this.hpShield > 0 && value < 0) { // If the target have a shield and lose HP
                                     if (this.hpShield + value < 0) {
@@ -674,7 +706,7 @@
                                 } else { return }
                             }
                             if (!this.underGCD) { // verify if there is the GCD
-                                if (this.isPlayerChanneling) { //toDo : when Soothing Mist is channeled the monk can use some spells instantly
+                                if (this.isPlayerChanneling) { //toDo : when Soothing Mist is channeled the monk can use some spells instantly - 1500 gcd if instacast unlike all others monk abilities
                                     this.breakChanneling = 1
                                     this.isPlayerChanneling = false
                                     this.castTimeRemaining = 0
@@ -853,30 +885,63 @@
                 },
 
                 applyStatusEffect(target, effect) {
-                    let duration = effect.baseDuration
-                    let selectedEntityId = this.selectedEntity.id
+                    let previous = target.activeEffects.filter((x) => x.id == effect.id)[0]
 
-                    if (effect.ticks != null) {
-                        let ticksInterval = effect.duration / effect.ticks
-                        let elune = () => {
-                            console.log(duration)
-                            duration -= 1000 / 20
-                            ticksInterval -= 1000 / 20
-                            if (Math.round(ticksInterval) <= 0) {
-                                effect.applyEffect(this, { selectedEntityId })
-                                ticksInterval = effect.duration / effect.ticks - 1000 / 20
-                            }
-                            if (Math.round(duration) > 0) {
-                                setTimeout(elune, 1000 / 20)
-                            } else {
-                                effect.applyEndEffect(this, { selectedEntityId })
-                                return
-                            }
-                        }
-                        setTimeout(elune, 1000 / 20);
-
+                    if (previous !== undefined) {
+                        previous.duration = effect.baseDuration
                     } else {
+                        effect = { ...effect }
 
+                        target.activeEffects.push(effect)
+
+                        effect.duration = effect.baseDuration
+                        let selectedEntityId = this.selectedEntity.id
+
+                        if (effect.ticks != null) {
+                            let ticksInterval = effect.baseDuration / effect.ticks
+                            if (effect.effect2 != null) {
+                                effect.applyEffect2(this, { selectedEntityId })
+                            }
+                            let elune = () => {
+                                effect.duration -= 1000 / 20
+                                ticksInterval -= 1000 / 20
+                                if (Math.round(ticksInterval) <= 0) {
+                                    effect.applyEffect(this, { selectedEntityId })
+                                    ticksInterval = effect.baseDuration / effect.ticks - 1000 / 20
+                                }
+                                if (Math.round(effect.duration) > 0) {
+                                    setTimeout(elune, 1000 / 20)
+                                } else {
+                                    if (effect.endEffect) {
+                                        effect.applyEndEffect(this, { selectedEntityId })
+                                    }
+
+                                    target.activeEffects.removeIf((x) => x.id == effect.id)
+
+                                    return
+                                }
+                            }
+                            setTimeout(elune, 1000 / 20);
+
+                        } else { // no ticks
+                            effect.applyEffect(this, { selectedEntityId })
+                            let elune = () => {
+                                console.log(effect.duration)
+                                effect.duration -= 1000 / 20
+                                if (Math.round(effect.duration) > 0) {
+                                    setTimeout(elune, 1000 / 20)
+                                } else {
+                                    if (effect.endEffect) {
+                                        effect.applyEndEffect(this, { selectedEntityId })
+                                    }
+
+                                    target.activeEffects.removeIf((x) => x.id == effect.id)
+
+                                    return
+                                }
+                            }
+                            setTimeout(elune, 1000 / 20);
+                        }
                     }
                 },
             },
@@ -921,7 +986,7 @@
                 let step = 0;
 
                 setInterval(() => {
-                    if (step % 45 == 0) {
+                    if (step % 60 == 0) {
                         for (const ally of this.allies) {
                             ally.addHp(-ally.maxHp / 100)
                         }

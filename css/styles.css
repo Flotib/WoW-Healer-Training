@@ -27,7 +27,7 @@ html {
     width: 700px;
     height: 100%;
     margin-left: 10px;
-    background-color: #ff000023;
+    /*background-color: #ff000023;*/
 }
 
 .allyhpbar {
@@ -529,4 +529,57 @@ html {
     background: linear-gradient(0deg, #00750065 0%, #00b40065 50%, #00750065 100%);
     height: 100%;
     left: 0;
+}
+
+.statusEffectLittleFrame {
+    position: absolute;
+    display: inline-flex;
+    width: 75%;
+    height: 25px;
+    right: 0;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.statusEffectLittleFrameIcon {
+    z-index: 10;
+    position: relative;
+    background-color: #ff7e7e;
+    margin: 2px;
+    width: 20px;
+    height: 20px;
+}
+
+.statusEffectLittleFrameIcon img {
+    width: 100%;
+    width: 100%;
+}
+
+.statusEffectBigFrame {
+    position: absolute;
+    display: flex;
+    flex-wrap: wrap;
+    width: 100%;
+    height: 10px;
+    bottom: -50px;
+}
+
+.statusEffectBigFrameIcon {
+    z-index: 10;
+    display: inline-flex;
+    position: relative;
+    background-color: #ff7e7e;
+    width: 33px;
+    height: 33px;
+    margin: 3px 4px 3px 4px;
+    left: 2px
+}
+
+.statusEffectCooldown {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    position: absolute;
+    z-index: 12;
+    pointer-events: none;
 }
