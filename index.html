@@ -232,12 +232,16 @@
                     haste: 0,
                     versatility: 0,
                     criticalStrike: 0,
+                    damageReduction: 0,
                     incomingHeal: false,
                     activeEffects: [],
                     addMana: function (value) {
                         this.mana = Math.max(0, Math.min(100, this.mana + value))
                     },
                     addHp: function (value) {
+                        if (value < 0) {
+                            value = value * 1 - this.damageReduction / 100
+                        }
                         if (this.hpShield > 0 && value < 0) { // If the target have a shield and lose HP
                             if (this.hpShield + value < 0) {
                                 value = value + this.hpShield
@@ -267,12 +271,23 @@
                     addShield: function (value) {
                         this.hpShield = this.hpShield + value
                     },
+                    addReduction: function (value) {
+                        this.damageReduction = this.damageReduction + value
+                    },
+                    removeDebuff: function (value) {
+                        for (const effect of this.activeEffects) {
+                            if (!effect.buff && effect.type == value) {
+                                effect.duration = 0
+                            }
+                        }
+                    },
                 },
                 spells: [
                 ],
                 spellPool: {
                     Priest: [ // Name of the class which have the following spells (for the moment there is only one class because the game isn't achieved yet, obviously)
                         {
+                            id: 1, // Id of the spell
                             name: "Flash Heal", // Name of the spell
                             mana: 3.6, // Mana used by the spell
                             manapersecond: 0,  // Mana per second use by the spell, used only by channeled spells
@@ -292,6 +307,7 @@
                             affectGCD: true, // If using this spell affect the GCD
                             deadTargetEffect: 0, // 0 = false; 1 = true ==> if the spell is only usable on dead allies (only for battle rez, i think c:)
                             key: 49, // Keybinding, should change in several updates, when I'll added the key on the spellbar, not on the spell itself
+                            reactToStatus: null, // Trigger an effect if the spell is cast on an entity who have the following effect id
                             applyStatus: null, // The status ID (buff or debuff) applied after the spell
                             applyStatus2: null, // Same as applyStatus but if the spell trigger a supplement status
                             use: function (game, state) {  // Function of the spell when it is used
@@ -299,6 +315,7 @@
                             },
                         },
                         {
+                            id: 2,
                             name: "Heal",
                             mana: 2.4,
                             manapersecond: 0,
@@ -318,6 +335,7 @@
                             affectGCD: true,
                             deadTargetEffect: 0,
                             key: 50,
+                            reactToStatus: null,
                             applyStatus: null,
                             applyStatus2: null,
                             use: function (game, state) {
@@ -325,6 +343,7 @@
                             },
                         },
                         {
+                            id: 3,
                             name: "Rebirth",
                             mana: 0,
                             manapersecond: 0,
@@ -344,6 +363,7 @@
                             affectGCD: true,
                             deadTargetEffect: 1,
                             key: 51,
+                            reactToStatus: null,
                             applyStatus: null,
                             applyStatus2: null,
                             use: function (game, state) {
@@ -351,6 +371,7 @@
                             },
                         },
                         {
+                            id: 4,
                             name: "Soothing Mist",
                             mana: 0,
                             manapersecond: 0.4,
@@ -370,6 +391,7 @@
                             affectGCD: true,
                             deadTargetEffect: 0,
                             key: 52,
+                            reactToStatus: null,
                             applyStatus: null,
                             applyStatus2: null,
                             use: function (game, state) {
@@ -377,6 +399,7 @@
                             },
                         },
                         {
+                            id: 5,
                             name: "Power Word: Shield",
                             mana: 3.1,
                             manapersecond: 0,
@@ -396,6 +419,7 @@
                             affectGCD: true,
                             deadTargetEffect: 0,
                             key: 53,
+                            reactToStatus: 1,
                             applyStatus: 1, // good way to do this sh*t --> get buff by id and add buff to target when you ended cast the spell cast. The shield must be on the buff, not the entity :/
                             applyStatus2: null,
                             use: function (game, state) {
@@ -510,9 +534,13 @@
                             role: desiredRole, //["tank", "healer", "dps"][rand(0, 2)],
                             getProperRole: false,
                             id: ++this.globalIncrement,
+                            damageReduction: 0,
                             incomingHeal: false,
                             activeEffects: [],
                             addHp: function (value) {
+                                if (value < 0) {
+                                    value = value * (1 - this.damageReduction / 100)
+                                }
                                 if (this.hpShield > 0 && value < 0) { // If the target have a shield and lose HP
                                     if (this.hpShield + value < 0) {
                                         value = value + this.hpShield
@@ -542,6 +570,16 @@
                             addShield: function (value) {
                                 this.hpShield = this.hpShield + value
                             },
+                            addReduction: function (value) {
+                                this.damageReduction = this.damageReduction + value
+                            },
+                            removeDebuff: function (value) {
+                                for (const effect of this.activeEffects) {
+                                    if (!effect.buff && effect.type == value) {
+                                        effect.duration = 0
+                                    }
+                                }
+                            },
                         })
                     }
                 },
@@ -552,6 +590,7 @@
                             if (ally.role == "tank") {
                                 ally.maxHp = 60000
                                 ally.hp = 60000
+                                ally.damageReduction = 10
                             } else {
                                 ally.maxHp = rand(3000, 3950) * 10
                                 ally.hp = rand(1, ally.maxHp) //toDo : ally.maxHp -- math random for tests
@@ -607,6 +646,15 @@
                     }
 
                     return null;
+                },
+
+                spellReactionToEffect(target, spell) {
+                    for (const targetEffect of target.activeEffects) {
+                        if (targetEffect.id == spell.reactToStatus) {
+                            return true
+                        }
+                    }
+                    return false
                 },
 
                 formatHpLabel(ally) {
@@ -676,6 +724,12 @@
                 },
 
                 useSpell(spell) {
+                    const selectedEntityId = this.selectedEntity.id
+                    if (this.spellReactionToEffect(this.findEntityById(selectedEntityId), spell)) { // if spell react to a buff/debuff
+                        if (spell.id == 5) { // Power Word: Shield
+                            return
+                        }
+                    }
                     if (spell.currentCooldown <= 0 && this.player.mana - spell.mana >= 0 && this.player.mana - spell.manapersecond >= 0) {
                         if (!spell.channeled) {
                             /*if (spell.incantTime <= 1000) {  // change the spellQueue delay if the spell incant time is lower than 1sec
@@ -715,7 +769,6 @@
                                 if (spell.incantTime > 0) {
                                     this.currentCastName = spell.name
                                 }
-                                const selectedEntityId = this.selectedEntity.id
                                 if (spell.deadTargetEffect == 0) { // Verify if the spell is a healing spell or a battle rez one and then verify if the target can be heal / rez
                                     if (this.findEntityById(selectedEntityId).hp <= 0) { // healing spell (break if target is dead)
                                         this.breakUseSpell()
