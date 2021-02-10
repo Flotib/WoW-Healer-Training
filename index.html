@@ -240,7 +240,7 @@
                     },
                     addHp: function (value) {
                         if (value < 0) {
-                            value = value * 1 - this.damageReduction / 100
+                            value *= (1 - this.damageReduction / 100)
                         }
                         if (this.hpShield > 0 && value < 0) { // If the target have a shield and lose HP
                             if (this.hpShield + value < 0) {
@@ -260,19 +260,19 @@
                             if (this.hpShield + finalValue < 0) {
                                 finalValue = finalValue + this.hpShield
                                 this.hpShield = 0
-                                this.hp = finalValue
+                                this.hp = Math.max(0, Math.min(this.maxHp, this.hp + finalValue))
                             } else if (this.hpShield + value >= 0) {
-                                this.hpShield = this.hpShield + finalValue
+                                this.hpShield = Math.max(0, Math.min(this.maxHp, this.hpShield + finalValue))
                             }
                         } else { // If the target don't have shield and lose HP or have shield but get HP
-                            this.hp = finalValue
+                            this.hp = Math.max(0, Math.min(this.maxHp, this.hp + finalValue))
                         }
                     },
                     addShield: function (value) {
-                        this.hpShield = this.hpShield + value
+                        this.hpShield += value
                     },
                     addReduction: function (value) {
-                        this.damageReduction = this.damageReduction + value
+                        this.damageReduction += value
                     },
                     removeDebuff: function (value) {
                         for (const effect of this.activeEffects) {
@@ -421,9 +421,9 @@
                             key: 53,
                             reactToStatus: 1,
                             applyStatus: 1, // good way to do this sh*t --> get buff by id and add buff to target when you ended cast the spell cast. The shield must be on the buff, not the entity :/
-                            applyStatus2: null,
+                            applyStatus2: 2,
                             use: function (game, state) {
-                                game.findEntityById(state.selectedEntityId).addShield(this.effectAmount)
+                                game.findEntityById(state.selectedEntityId).addShield(0)
                             },
                         },
                     ],
@@ -434,19 +434,59 @@
                         name: "test", // its name
                         buff: true, // false if it's a debuff, used to change the border color
                         type: "magic", // curse, disease, magic, poison --> for dispelling
-                        effect: 1000,
-                        effect2: null,
-                        endEffect: true,
-                        baseDuration: 5000,
-                        duration: 5000,
-                        ticks: 5, // number of times the effect is triggered. Null if the buff don't repeat the effect
+                        baseShield: 1000,
+                        shield: 1000,
+                        shieldAffectedByStats: true,
+                        baseEffect: 0,
+                        effect: 0, // cast one time in a buff where ticks=0, else it is cast at every ticks -- applyEffect
+                        effectAffectedByStats: true,
+                        baseEffect2: null,
+                        effect2: null, // cast one time at the start of the buff, even in an effect with ticks>0 -- applyEffect2
+                        effect2AffectedByStats: true,
+                        haveEndEffect: true, // effect cast one time at the end of the buff -- applyEndEffect
+                        baseEndEffectValue: 100,
+                        endEffectValue: 100,
+                        endEffectAffectedByStats: true,
+                        baseDuration: 5000, // base duration of the statusEffect
+                        duration: 5000, // duration
+                        ticks: 0, // number of times the effect is triggered. Null if the buff don't repeat the effect
                         tooltip: "test",
                         icon: "spell_holy_powerwordshield",
                         applyEffect: function (game, state) {
-                            game.findEntityById(state.selectedEntityId).addHp(this.effect)
+                            game.findEntityById(state.selectedEntityId).addShield(this.effect)
                         },
                         applyEndEffect: function (game, state) {
                             game.findEntityById(state.selectedEntityId).addHpPercent(100)
+                        },
+                    },
+                    {
+                        id: 2,
+                        name: "test2",
+                        buff: true,
+                        type: "magic",
+                        baseShield: 500,
+                        shield: 500,
+                        shieldAffectedByStats: true,
+                        baseEffect: 0,
+                        effect: 0,
+                        effectAffectedByStats: true,
+                        baseEffect2: null,
+                        effect2: null,
+                        effect2AffectedByStats: false,
+                        haveEndEffect: false,
+                        baseEndEffectValue: null,
+                        endEffectValue: null,
+                        endEffectAffectedByStats: false,
+                        baseDuration: 5000,
+                        duration: 5000,
+                        ticks: 0,
+                        tooltip: "test",
+                        icon: "spell_holy_powerwordshield",
+                        applyEffect: function (game, state) {
+                            game.findEntityById(state.selectedEntityId).addShield(this.effect)
+                        },
+                        applyEndEffect: function (game, state) {
+                            game.findEntityById(state.selectedEntityId).addHpPercent(this.endEffectValue)
                         },
                     },
                 ],
@@ -539,7 +579,7 @@
                             activeEffects: [],
                             addHp: function (value) {
                                 if (value < 0) {
-                                    value = value * (1 - this.damageReduction / 100)
+                                    value *= (1 - this.damageReduction / 100)
                                 }
                                 if (this.hpShield > 0 && value < 0) { // If the target have a shield and lose HP
                                     if (this.hpShield + value < 0) {
@@ -559,19 +599,19 @@
                                     if (this.hpShield + finalValue < 0) {
                                         finalValue = finalValue + this.hpShield
                                         this.hpShield = 0
-                                        this.hp = finalValue
+                                        this.hp = Math.max(0, Math.min(this.maxHp, this.hp + finalValue))
                                     } else if (this.hpShield + value >= 0) {
-                                        this.hpShield = this.hpShield + finalValue
+                                        this.hpShield = Math.max(0, Math.min(this.maxHp, this.hpShield + finalValue))
                                     }
                                 } else { // If the target don't have shield and lose HP or have shield but get HP
-                                    this.hp = finalValue
+                                    this.hp = Math.max(0, Math.min(this.maxHp, this.hp + finalValue))
                                 }
                             },
                             addShield: function (value) {
-                                this.hpShield = this.hpShield + value
+                                this.hpShield += value
                             },
                             addReduction: function (value) {
-                                this.damageReduction = this.damageReduction + value
+                                this.damageReduction += value
                             },
                             removeDebuff: function (value) {
                                 for (const effect of this.activeEffects) {
@@ -593,7 +633,7 @@
                                 ally.damageReduction = 10
                             } else {
                                 ally.maxHp = rand(3000, 3950) * 10
-                                ally.hp = rand(1, ally.maxHp) //toDo : ally.maxHp -- math random for tests
+                                ally.hp = rand(1, ally.maxHp) //toDo : set to ally.maxHp -- math random for tests
                             }
                             ally.getProperRole = true
                         }
@@ -694,7 +734,7 @@
                     this.player.mana = 0
                 },
 
-                statsCalculation() {
+                statsCalculation() { // toDo : do the same for effects
                     for (const spell of this.spells) {
                         //haste
                         spell.incantTime = spell.baseIncantTime / (1 + this.player.haste / 100)
@@ -703,7 +743,22 @@
                         //spellpower & versatility
                         spell.effectAmount = Math.ceil(spell.baseEffectAmount * this.player.spellPower * (1 + this.player.versatility / 100))
                         if (spell.channeled) {
-                            spell.channelEffectAmount = (spell.baseEffectAmount * this.player.spellPower) * spell.channelTicks
+                            spell.channelEffectAmount = Math.ceil(spell.baseEffectAmount * this.player.spellPower * (1 + this.player.versatility / 100)) * spell.channelTicks
+                        }
+                    }
+                    for (const effect of this.statusEffects) {
+                        //spellpower & versatility
+                        if (effect.shieldAffectedByStats) {
+                            effect.shield = Math.ceil(effect.baseShield * this.player.spellPower * (1 + this.player.versatility / 100))
+                        }
+                        if (effect.effectAffectedByStats) {
+                            effect.effect = Math.ceil(effect.baseEffect * this.player.spellPower * (1 + this.player.versatility / 100))
+                        }
+                        if (effect.effect2AffectedByStats) {
+                            effect.effect2 = Math.ceil(effect.baseEffect2 * this.player.spellPower * (1 + this.player.versatility / 100))
+                        }
+                        if (effect.endEffectAffectedByStats) {
+                            effect.endEffectValue = Math.ceil(effect.baseEndEffectValue * this.player.spellPower * (1 + this.player.versatility / 100))
                         }
                     }
                 },
@@ -952,10 +1007,15 @@
 
                         if (effect.ticks != null) {
                             let ticksInterval = effect.baseDuration / effect.ticks
-                            if (effect.effect2 != null) {
+                            if (effect.baseEffect2 != null) {
                                 effect.applyEffect2(this, { selectedEntityId })
                             }
                             let elune = () => {
+                                if (target.hp <= 0) {
+                                    effect.duration = 0
+                                    target.activeEffects.removeIf((x) => x.id == effect.id)
+                                    return
+                                }
                                 effect.duration -= 1000 / 20
                                 ticksInterval -= 1000 / 20
                                 if (Math.round(ticksInterval) <= 0) {
@@ -965,7 +1025,7 @@
                                 if (Math.round(effect.duration) > 0) {
                                     setTimeout(elune, 1000 / 20)
                                 } else {
-                                    if (effect.endEffect) {
+                                    if (effect.haveEndEffect) {
                                         effect.applyEndEffect(this, { selectedEntityId })
                                     }
 
@@ -977,14 +1037,24 @@
                             setTimeout(elune, 1000 / 20);
 
                         } else { // no ticks
-                            effect.applyEffect(this, { selectedEntityId })
+                            if (effect.baseEffect != null) {
+                                effect.applyEffect(this, { selectedEntityId })
+                                if (effect.baseEffect2 != null) {
+                                    effect.applyEffect2(this, { selectedEntityId })
+                                }
+                            }
                             let elune = () => {
+                                if (target.hp <= 0) {
+                                    effect.duration = 0
+                                    target.activeEffects.removeIf((x) => x.id == effect.id)
+                                    return
+                                }
                                 console.log(effect.duration)
                                 effect.duration -= 1000 / 20
                                 if (Math.round(effect.duration) > 0) {
                                     setTimeout(elune, 1000 / 20)
                                 } else {
-                                    if (effect.endEffect) {
+                                    if (effect.haveEndEffect) {
                                         effect.applyEndEffect(this, { selectedEntityId })
                                     }
 
