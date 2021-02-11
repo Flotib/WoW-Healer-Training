@@ -61,6 +61,11 @@
                 <div v-for="(ally,index) in allies" :key="index" :class="'allyhpbar' +(selected==index?' selected':'')"
                     :data-label="formatHpLabel(ally)" @click="()=>selected=index">
                     <div class="statusEffectLittleFrame">
+                        <div style="color: white; font-size: 50px; position: absolute; top: 50px;">
+                            <div v-for="(shield, index) in ally.activeShields" :key="index">
+                                {{ shield.id }} -- {{ shield.value }}
+                            </div>
+                        </div>
                         <div v-for="(effect, index) in ally.activeEffects" :key="index"
                             class="statusEffectLittleFrameIcon">
                             <div class="statusEffectCooldown"
@@ -462,21 +467,21 @@
                 statusEffects: [ // not final, still thinking about how I can do this simply without reworking all my code
                     {
                         id: 1, // id of the status effect
-                        name: "test", // its name
+                        name: "Power Word: Shield", // its name
                         buff: true, // false if it's a debuff, used to change the border color
                         type: "magic", // curse, disease, magic, poison --> for dispelling
-                        baseEffect: 1,
-                        effect: 1, // cast one time in a buff where ticks=0, else it is cast at every ticks -- applyEffect
+                        baseEffect: 1.65,
+                        effect: 1.65, // cast one time in a buff where ticks=0, else it is cast at every ticks -- applyEffect
                         effectAffectedByStats: true,
                         baseEffect2: null,
                         effect2: null, // cast one time at the start of the buff, even in an effect with ticks>0 -- applyEffect2
-                        effect2AffectedByStats: true,
+                        effect2AffectedByStats: false,
                         haveEndEffect: false, // effect cast one time at the end of the buff -- applyEndEffect
-                        baseEndEffectValue: 100,
-                        endEffectValue: 100,
+                        baseEndEffectValue: null,
+                        endEffectValue: null,
                         endEffectAffectedByStats: false,
-                        baseDuration: 5000, // base duration of the statusEffect
-                        duration: 5000, // duration
+                        baseDuration: 15000, // base duration of the statusEffect
+                        duration: 15000, // duration
                         ticks: null, // number of times the effect is triggered. Null if the buff don't repeat the effect
                         tooltip: "test",
                         icon: "spell_holy_powerwordshield",
@@ -486,18 +491,15 @@
                                 value: this.effect,
                             })
                         },
-                        applyEndEffect: function (game, state) {
-                            game.findEntityById(state.selectedEntityId).addHpPercent(100)
-                        },
                     },
                     {
                         id: 2,
-                        name: "test2",
-                        buff: true,
-                        type: "magic",
-                        baseEffect: 0.5,
-                        effect: 0.5,
-                        effectAffectedByStats: true,
+                        name: "Weakened Soul",
+                        buff: false,
+                        type: null,
+                        baseEffect: null,
+                        effect: null,
+                        effectAffectedByStats: false,
                         baseEffect2: null,
                         effect2: null,
                         effect2AffectedByStats: false,
@@ -505,20 +507,11 @@
                         baseEndEffectValue: null,
                         endEffectValue: null,
                         endEffectAffectedByStats: false,
-                        baseDuration: 5000,
-                        duration: 5000,
+                        baseDuration: 7500,
+                        duration: 7500,
                         ticks: null,
                         tooltip: "test",
-                        icon: "spell_holy_powerwordshield",
-                        applyEffect: function (game, state) {
-                            game.findEntityById(state.selectedEntityId).addShield({
-                                id: this.id,
-                                value: this.effect,
-                            })
-                        },
-                        applyEndEffect: function (game, state) {
-                            game.findEntityById(state.selectedEntityId).addHpPercent(this.endEffectValue)
-                        },
+                        icon: "spell_holy_ashestoashes",
                     },
                 ],
             },
@@ -1060,75 +1053,78 @@
                     let previous = target.activeEffects.filter((x) => x.id == effect.id)[0]
 
                     if (previous !== undefined) {
-                        previous.duration = effect.baseDuration
-                    } else {
-                        effect = { ...effect }
+                        previous.duration = -1
+                        target.activeEffects.removeIf((x) => x.id == effect.id)
+                        target.activeShields.removeIf((x) => x.id == effect.id) // even if the effect is removed, the previous effect duration still decrease and will cancel the new effect
+                    } // else =>
 
-                        target.activeEffects.push(effect)
 
-                        effect.duration = effect.baseDuration
-                        let selectedEntityId = this.selectedEntity.id
+                    effect = { ...effect }
 
-                        if (effect.ticks != null) {
-                            let ticksInterval = effect.baseDuration / effect.ticks
+                    target.activeEffects.push(effect)
+
+                    effect.duration = effect.baseDuration
+                    let selectedEntityId = this.selectedEntity.id
+
+                    if (effect.ticks != null) {
+                        let ticksInterval = effect.baseDuration / effect.ticks
+                        if (effect.baseEffect2 != null) {
+                            effect.applyEffect2(this, { selectedEntityId })
+                        }
+                        let elune = () => {
+                            if (target.hp <= 0) {
+                                effect.duration = 0
+                                target.activeEffects.removeIf((x) => x.id == effect.id)
+                                return
+                            }
+                            effect.duration -= 1000 / 20
+                            ticksInterval -= 1000 / 20
+                            if (Math.round(ticksInterval) <= 0) {
+                                effect.applyEffect(this, { selectedEntityId })
+                                ticksInterval = effect.baseDuration / effect.ticks - 1000 / 20
+                            }
+                            if (Math.round(effect.duration) > 0) {
+                                setTimeout(elune, 1000 / 20)
+                            } else {
+                                if (effect.haveEndEffect) {
+                                    effect.applyEndEffect(this, { selectedEntityId })
+                                }
+
+                                target.activeEffects.removeIf((x) => x.id == effect.id)
+                                target.activeEffects.removeIf((x) => x.id == effect.id)
+
+                                return
+                            }
+                        }
+                        setTimeout(elune, 1000 / 20);
+
+                    } else { // no ticks
+                        if (effect.baseEffect != null) {
+                            effect.applyEffect(this, { selectedEntityId })
                             if (effect.baseEffect2 != null) {
                                 effect.applyEffect2(this, { selectedEntityId })
                             }
-                            let elune = () => {
-                                if (target.hp <= 0) {
-                                    effect.duration = 0
-                                    target.activeEffects.removeIf((x) => x.id == effect.id)
-                                    return
-                                }
-                                effect.duration -= 1000 / 20
-                                ticksInterval -= 1000 / 20
-                                if (Math.round(ticksInterval) <= 0) {
-                                    effect.applyEffect(this, { selectedEntityId })
-                                    ticksInterval = effect.baseDuration / effect.ticks - 1000 / 20
-                                }
-                                if (Math.round(effect.duration) > 0) {
-                                    setTimeout(elune, 1000 / 20)
-                                } else {
-                                    if (effect.haveEndEffect) {
-                                        effect.applyEndEffect(this, { selectedEntityId })
-                                    }
-
-                                    target.activeEffects.removeIf((x) => x.id == effect.id)
-                                    target.activeEffects.removeIf((x) => x.id == effect.id)
-
-                                    return
-                                }
-                            }
-                            setTimeout(elune, 1000 / 20);
-
-                        } else { // no ticks
-                            if (effect.baseEffect != null) {
-                                effect.applyEffect(this, { selectedEntityId })
-                                if (effect.baseEffect2 != null) {
-                                    effect.applyEffect2(this, { selectedEntityId })
-                                }
-                            }
-                            let elune = () => {
-                                if (target.hp <= 0) {
-                                    effect.duration = 0
-                                    target.activeEffects.removeIf((x) => x.id == effect.id)
-                                    return
-                                }
-                                effect.duration -= 1000 / 20
-                                if (Math.round(effect.duration) > 0) {
-                                    setTimeout(elune, 1000 / 20)
-                                } else {
-                                    if (effect.haveEndEffect) {
-                                        effect.applyEndEffect(this, { selectedEntityId })
-                                    }
-
-                                    target.activeEffects.removeIf((x) => x.id == effect.id)
-                                    target.activeShields.removeIf((x) => x.id == effect.id)
-                                    return
-                                }
-                            }
-                            setTimeout(elune, 1000 / 20);
                         }
+                        let elune = () => {
+                            if (target.hp <= 0) {
+                                effect.duration = 0
+                                target.activeEffects.removeIf((x) => x.id == effect.id)
+                                return
+                            }
+                            effect.duration -= 1000 / 20
+                            if (Math.round(effect.duration) > 0) {
+                                setTimeout(elune, 1000 / 20)
+                            } else {
+                                if (effect.haveEndEffect) {
+                                    effect.applyEndEffect(this, { selectedEntityId })
+                                }
+
+                                target.activeEffects.removeIf((x) => x.id == effect.id)
+                                target.activeShields.removeIf((x) => x.id == effect.id)
+                                return
+                            }
+                        }
+                        setTimeout(elune, 1000 / 20);
                     }
                 },
             },
