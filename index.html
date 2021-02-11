@@ -62,7 +62,7 @@
                     :data-label="formatHpLabel(ally)" @click="()=>selected=index">
                     <div class="statusEffectLittleFrame">
                         <div v-for="(effect, index) in ally.activeEffects" :key="index"
-                            class="statusEffectLittleFrameIcon">
+                            class="statusEffectLittleFrameIcon" v-bind:style="effect.buff ? 'border-color: #a5a5a5;' : 'border-color: #d10606;'">
                             <div class="statusEffectCooldown"
                                 :style="'background: conic-gradient(#14161bb0 '+(360*(1-effect.duration/effect.baseDuration))+'deg, transparent '+(360*(1-effect.duration/effect.baseDuration))+'deg);'">
                             </div>
@@ -88,7 +88,7 @@
                 <div class="playerHPbar" :data-label="Number((player.hp/player.maxHp*100).toFixed(1))+'%'">
                     <div class="statusEffectBigFrame">
                         <div v-for="(effect, index) in player.activeEffects" :key="index"
-                            class="statusEffectBigFrameIcon">
+                            class="statusEffectBigFrameIcon" v-bind:style="effect.buff ? 'border-color: #a5a5a5;' : 'border-color: #d10606;'">
                             <div class="statusEffectCooldown"
                                 :style="'background: conic-gradient(#14161bb0 '+(360*(1-effect.duration/effect.baseDuration))+'deg, transparent '+(360*(1-effect.duration/effect.baseDuration))+'deg);'">
                             </div>
