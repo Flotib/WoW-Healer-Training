@@ -61,11 +61,6 @@
                 <div v-for="(ally,index) in allies" :key="index" :class="'allyhpbar' +(selected==index?' selected':'')"
                     :data-label="formatHpLabel(ally)" @click="()=>selected=index">
                     <div class="statusEffectLittleFrame">
-                        <div style="color: white; font-size: 50px; position: absolute; top: 50px;">
-                            <div v-for="(shield, index) in ally.activeShields" :key="index">
-                                {{ shield.id }} -- {{ shield.value }}
-                            </div>
-                        </div>
                         <div v-for="(effect, index) in ally.activeEffects" :key="index"
                             class="statusEffectLittleFrameIcon">
                             <div class="statusEffectCooldown"
@@ -483,6 +478,7 @@
                         baseDuration: 15000, // base duration of the statusEffect
                         duration: 15000, // duration
                         ticks: null, // number of times the effect is triggered. Null if the buff don't repeat the effect
+                        beingRenewed: false, // Always false, used to renewed the effect in the function
                         tooltip: "test",
                         icon: "spell_holy_powerwordshield",
                         applyEffect: function (game, state) {
@@ -510,6 +506,7 @@
                         baseDuration: 7500,
                         duration: 7500,
                         ticks: null,
+                        beingRenewed: false,
                         tooltip: "test",
                         icon: "spell_holy_ashestoashes",
                     },
@@ -1053,78 +1050,97 @@
                     let previous = target.activeEffects.filter((x) => x.id == effect.id)[0]
 
                     if (previous !== undefined) {
-                        previous.duration = -1
-                        target.activeEffects.removeIf((x) => x.id == effect.id)
-                        target.activeShields.removeIf((x) => x.id == effect.id) // even if the effect is removed, the previous effect duration still decrease and will cancel the new effect
-                    } // else =>
+                        previous.beingRenewed = true
+                    } else {
 
 
-                    effect = { ...effect }
+                        effect = { ...effect }
 
-                    target.activeEffects.push(effect)
+                        target.activeEffects.push(effect)
 
-                    effect.duration = effect.baseDuration
-                    let selectedEntityId = this.selectedEntity.id
+                        effect.duration = effect.baseDuration
+                        let selectedEntityId = this.selectedEntity.id
 
-                    if (effect.ticks != null) {
-                        let ticksInterval = effect.baseDuration / effect.ticks
-                        if (effect.baseEffect2 != null) {
-                            effect.applyEffect2(this, { selectedEntityId })
-                        }
-                        let elune = () => {
-                            if (target.hp <= 0) {
-                                effect.duration = 0
-                                target.activeEffects.removeIf((x) => x.id == effect.id)
-                                return
-                            }
-                            effect.duration -= 1000 / 20
-                            ticksInterval -= 1000 / 20
-                            if (Math.round(ticksInterval) <= 0) {
-                                effect.applyEffect(this, { selectedEntityId })
-                                ticksInterval = effect.baseDuration / effect.ticks - 1000 / 20
-                            }
-                            if (Math.round(effect.duration) > 0) {
-                                setTimeout(elune, 1000 / 20)
-                            } else {
-                                if (effect.haveEndEffect) {
-                                    effect.applyEndEffect(this, { selectedEntityId })
-                                }
-
-                                target.activeEffects.removeIf((x) => x.id == effect.id)
-                                target.activeEffects.removeIf((x) => x.id == effect.id)
-
-                                return
-                            }
-                        }
-                        setTimeout(elune, 1000 / 20);
-
-                    } else { // no ticks
-                        if (effect.baseEffect != null) {
-                            effect.applyEffect(this, { selectedEntityId })
+                        if (effect.ticks != null) {
+                            let ticksInterval = effect.baseDuration / effect.ticks
                             if (effect.baseEffect2 != null) {
                                 effect.applyEffect2(this, { selectedEntityId })
                             }
-                        }
-                        let elune = () => {
-                            if (target.hp <= 0) {
-                                effect.duration = 0
-                                target.activeEffects.removeIf((x) => x.id == effect.id)
-                                return
-                            }
-                            effect.duration -= 1000 / 20
-                            if (Math.round(effect.duration) > 0) {
-                                setTimeout(elune, 1000 / 20)
-                            } else {
-                                if (effect.haveEndEffect) {
-                                    effect.applyEndEffect(this, { selectedEntityId })
+                            let elune = () => {
+                                if (effect.beingRenewed) {
+                                    target.activeShields.removeIf((x) => x.id == effect.id)
+                                    if (effect.baseEffect2 != null) {
+                                        effect.applyEffect2(this, { selectedEntityId })
+                                    }
+                                    effect.duration = effect.baseDuration
+                                    ticksInterval = effect.baseDuration / effect.ticks
+                                    effect.beingRenewed = false
                                 }
+                                if (target.hp <= 0) {
+                                    effect.duration = 0
+                                    target.activeEffects.removeIf((x) => x.id == effect.id)
+                                    return
+                                }
+                                effect.duration -= 1000 / 20
+                                ticksInterval -= 1000 / 20
+                                if (Math.round(ticksInterval) <= 0) {
+                                    effect.applyEffect(this, { selectedEntityId })
+                                    ticksInterval = effect.baseDuration / effect.ticks - 1000 / 20
+                                }
+                                if (Math.round(effect.duration) > 0) {
+                                    setTimeout(elune, 1000 / 20)
+                                } else {
+                                    if (effect.haveEndEffect) {
+                                        effect.applyEndEffect(this, { selectedEntityId })
+                                    }
 
-                                target.activeEffects.removeIf((x) => x.id == effect.id)
-                                target.activeShields.removeIf((x) => x.id == effect.id)
-                                return
+                                    target.activeEffects.removeIf((x) => x.id == effect.id)
+                                    target.activeEffects.removeIf((x) => x.id == effect.id)
+
+                                    return
+                                }
                             }
+                            setTimeout(elune, 1000 / 20);
+
+                        } else { // no ticks
+                            if (effect.baseEffect != null) {
+                                effect.applyEffect(this, { selectedEntityId })
+                                if (effect.baseEffect2 != null) {
+                                    effect.applyEffect2(this, { selectedEntityId })
+                                }
+                            }
+                            let elune = () => {
+                                if (effect.beingRenewed) {
+                                    target.activeShields.removeIf((x) => x.id == effect.id)
+                                    if (effect.baseEffect != null) {
+                                        effect.applyEffect(this, { selectedEntityId })
+                                        if (effect.baseEffect2 != null) {
+                                            effect.applyEffect2(this, { selectedEntityId })
+                                        }
+                                    }
+                                    effect.duration = effect.baseDuration
+                                    effect.beingRenewed = false
+                                }
+                                if (target.hp <= 0) {
+                                    effect.duration = 0
+                                    target.activeEffects.removeIf((x) => x.id == effect.id)
+                                    return
+                                }
+                                effect.duration -= 1000 / 20
+                                if (Math.round(effect.duration) > 0) {
+                                    setTimeout(elune, 1000 / 20)
+                                } else {
+                                    if (effect.haveEndEffect) {
+                                        effect.applyEndEffect(this, { selectedEntityId })
+                                    }
+
+                                    target.activeEffects.removeIf((x) => x.id == effect.id)
+                                    target.activeShields.removeIf((x) => x.id == effect.id)
+                                    return
+                                }
+                            }
+                            setTimeout(elune, 1000 / 20);
                         }
-                        setTimeout(elune, 1000 / 20);
                     }
                 },
             },
@@ -1165,7 +1181,7 @@
                 this.addAlly(10, "dps");
 
                 this.changeAllyHpByRole()
-        
+
                 let step = 0;
 
                 setInterval(() => {
