@@ -31,6 +31,7 @@ html {
 }
 
 .allyhpbar {
+    z-index: 0;
     width: 130px;
     height: 70px;
     margin: 5px 6px 5px 6px;
@@ -512,7 +513,7 @@ html {
 }
 
 .shieldBar {
-    z-index: 1;
+    z-index: -1;
     position: relative;
     display: flex;
     background: #6abfe8;
@@ -522,7 +523,7 @@ html {
 }
 
 .incomingHeal {
-    z-index: 1;
+    z-index: -1;
     position: relative;
     display: flex;
     background: #007500;
