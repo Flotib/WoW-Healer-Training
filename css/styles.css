@@ -183,7 +183,7 @@ html {
     width: 46px;
     height: 46px;
     border: 2px groove transparent;
-    border-radius: 6px ;
+    border-radius: 4px ;
     background-color: transparent;
 }
 
@@ -195,7 +195,7 @@ html {
 .spellcontainer .spellCooldownBackground {
     width: 46px;
     height: 46px;
-    border-radius: 6px ;
+    border-radius: 4px ;
     display: flex;
     position: absolute;
     z-index: 12;
@@ -554,6 +554,7 @@ html {
 .statusEffectLittleFrameIcon img {
     width: 100%;
     width: 100%;
+    border-radius: 4px;
 }
 
 .statusEffectBigFrame {
@@ -569,11 +570,16 @@ html {
     z-index: 10;
     display: inline-flex;
     position: relative;
-    background-color: #ff7e7e;
     width: 33px;
     height: 33px;
     margin: 3px 4px 3px 4px;
     left: 2px
+}
+
+.statusEffectBigFrameIcon img{
+    width: 100%;
+    width: 100%;
+    border-radius: 4px;
 }
 
 .statusEffectCooldown {
@@ -583,4 +589,5 @@ html {
     position: absolute;
     z-index: 12;
     pointer-events: none;
+    border-radius: 4px;
 }
