@@ -54,6 +54,8 @@
             <div style="color: #ffffff; display: inline-block; margin-left: 10px;">
                 {{ Number(globalCooldown.toFixed(2)) }}
             </div>
+            <button @click="selectClass('Priest')" style="margin-left: 10px; color: #fff; background-color: black;">Priest</button>
+            <button @click="selectClass('Monk')" style="margin-left: 10px; color: #49eebc; background-color: black;">Monk</button>
         </div>
 
         <div class="flexframe">
@@ -88,7 +90,6 @@
         </div>
 
         <div class="playerInterface">
-
             <div :class="'playerFrame' +(selected==player.id?' selected':'')" @click="()=>selected=player.id">
                 <div class="playerHPbar" :data-label="Number((player.hp/player.maxHp*100).toFixed(1))+'%'">
                     <div class="statusEffectBigFrame">
@@ -127,7 +128,6 @@
             </div>
 
             <div class="spellbar">
-                <!-- Idk if the behaviour is correct but when you press the click on a spell and then release it on another spell, the spell isn't cast => @click. -->
                 <div v-for="(spell,index) in spells" :key="index" class="spellcontainer" @click="()=>useSpell(spell)"
                     @mouseover="() => onSpellHover(spell)" @mouseleave="() => onSpellLeave(spell)"
                     @mousedown="holdClickHoverOn" @mouseup="holdClickHoverOff" @touchstart="holdClickHoverOn"
@@ -158,7 +158,7 @@
                     {{ hoveredSpell.mana }}% Mana
                 </div>
                 <div class="spellTooltipManaCost" v-if="hoveredSpell.manapersecond>0 && hoveredSpell.channeled">
-                    {{ hoveredSpell.manapersecond }}% Mana per second
+                    {{ Number((hoveredSpell.manapersecond * (1 + this.player.haste / 100)).toFixed(2)) }}% Mana per second
                 </div>
                 <div class="spellTooltipCastTime">
                     <template v-if="hoveredSpell.incantTime>1">{{ Number((hoveredSpell.incantTime/1000).toFixed(2)) }}
@@ -230,6 +230,7 @@
                 allies: [
                 ],
                 player: {
+                    clazz: null,
                     maxHp: 35000,
                     hp: 20000,
                     hpShield: 0,
@@ -324,6 +325,36 @@
                 spells: [
                 ],
                 spellPool: {
+                    Monk: [
+                    {
+                            id: 4,
+                            name: "Soothing Mist",
+                            mana: 0,
+                            manapersecond: 0.4,
+                            baseEffectAmount: 0.55,
+                            effectAmount: 0.55,
+                            tooltip: "Heals the target for #spellpower over #channeltime sec.  While channeling, Enveloping Mist and Vivify may be cast instantly on the target.",
+                            icon: "ability_monk_soothingmists",
+                            baseIncantTime: 0,
+                            incantTime: 0,
+                            baseChannelTime: 8000,
+                            channelTime: 8000,
+                            channelTicks: 8,
+                            channelEffectAmount: 4.4,
+                            channeled: true,
+                            cooldown: 0,
+                            currentCooldown: 0,
+                            affectGCD: true,
+                            deadTargetEffect: 0,
+                            key: 49,
+                            reactToStatus: null,
+                            applyStatus: 4,
+                            applyStatus2: null,
+                            use: function (game, state) {
+                                game.findEntityById(state.selectedEntityId).addHp(this.effectAmount)
+                            },
+                        },
+                    ],
                     Priest: [ // Name of the class which have the following spells (for the moment there is only one class because the game isn't achieved yet, obviously)
                         {
                             id: 1, // Id of the spell
@@ -407,34 +438,6 @@
                             applyStatus2: null,
                             use: function (game, state) {
                                 game.findEntityById(state.selectedEntityId).addHpPercent(100)
-                            },
-                        },
-                        {
-                            id: 4,
-                            name: "Soothing Mist",
-                            mana: 0,
-                            manapersecond: 0.4,
-                            baseEffectAmount: 0.55,
-                            effectAmount: 0.55,
-                            tooltip: "Heals the target for #spellpower over #channeltime sec.  While channeling, Enveloping Mist and Vivify may be cast instantly on the target.",
-                            icon: "ability_monk_soothingmists",
-                            baseIncantTime: 0,
-                            incantTime: 0,
-                            baseChannelTime: 8000,
-                            channelTime: 8000,
-                            channelTicks: 8,
-                            channelEffectAmount: 4.4,
-                            channeled: true,
-                            cooldown: 0,
-                            currentCooldown: 0,
-                            affectGCD: true,
-                            deadTargetEffect: 0,
-                            key: 52,
-                            reactToStatus: null,
-                            applyStatus: 4,
-                            applyStatus2: null,
-                            use: function (game, state) {
-                                game.findEntityById(state.selectedEntityId).addHp(this.effectAmount)
                             },
                         },
                         {
@@ -897,7 +900,11 @@
                         //haste
                         spell.incantTime = spell.baseIncantTime / (1 + this.player.haste / 100)
                         spell.channelTime = spell.baseChannelTime / (1 + this.player.haste / 100)
-                        this.globalCooldown = 1500 / (1 + this.player.haste / 100) // 1500 for baseGCD, if it cause problems later ==> create a var baseGCD in data
+                        if (this.player.clazz != "Monk") {
+                            this.globalCooldown = Math.max(750, Math.round(1500 / (1 + this.player.haste / 100))) // 1500 for baseGCD, if it cause problems later ==> create a var baseGCD in data
+                        } else {
+                            this.globalCooldown = Math.max(750, Math.round(1000 / (1 + this.player.haste / 100))) // 1500 for baseGCD, if it cause problems later ==> create a var baseGCD in data
+                        }
                         //spellpower & versatility
                         spell.effectAmount = Math.round(spell.baseEffectAmount * this.player.spellPower * (1 + this.player.versatility / 100))
                         if (spell.channeled) {
@@ -936,6 +943,8 @@
                     for (let i = 0; i < totalspells; i++) {
                         this.addSpell()
                     }
+                    this.player.clazz = clazz
+                    this.statsCalculation()
                 },
 
                 useSpell(spell) {
