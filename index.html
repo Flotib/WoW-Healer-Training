@@ -11,169 +11,193 @@
 
 <body>
     <div id="app">
-        <button @click="debugSpawnAlly">debugspawn</button>
-        <button @click="addSpell">debugaddspell</button>
-        <button @click="playerSetMinMana">mana 0</button>
-        <button @click="playerSetMaxMana">mana 100</button>
-        <button @click="player.addMana(-10)">Mana -10</button>
-        <!--<input v-model="manaRegen" id="number" type="number" style="width: 35px;">-->
-        <input v-model="player.haste" type="number" style="width: 50px; color: #6d3fa8" @input="statsCalculation">
-        <input v-model="player.spellPower" type="number" style="width: 50px; color: #4289e6" @input="statsCalculation">
-        <input v-model="player.versatility" type="number" style="width: 50px; color: #26c033" @input="statsCalculation">
-        <input v-model="player.criticalStrike" type="number" style="width: 50px; color: #ff640a"
-            @input="statsCalculation">
-        <div style="color: white; display: inline-block;">
-            {{ selectedEntity ? selectedEntity.id : 'none' }}
-            <div style="color: #b3b3b3; display: inline-block; margin-left: 10px;">
-                {{ selected ? selected : 'none' }}
+        <div>
+            <button @click="debugSpawnAlly">debugspawn</button>
+            <button @click="addSpell">debugaddspell</button>
+            <button @click="playerSetMinMana">mana 0</button>
+            <button @click="playerSetMaxMana">mana 100</button>
+            <button @click="player.addMana(-10)">Mana -10</button>
+            <!--<input v-model="manaRegen" id="number" type="number" style="width: 35px;">-->
+            <input v-model="player.haste" type="number" style="width: 50px; color: #6d3fa8" @input="statsCalculation">
+            <input v-model="player.spellPower" type="number" style="width: 50px; color: #4289e6"
+                @input="statsCalculation">
+            <input v-model="player.versatility" type="number" style="width: 50px; color: #26c033"
+                @input="statsCalculation">
+            <input v-model="player.criticalStrike" type="number" style="width: 50px; color: #ff640a"
+                @input="statsCalculation">
+            <div style="color: white; display: inline-block;">
+                {{ selectedEntity ? selectedEntity.id : 'none' }}
+                <div style="color: #b3b3b3; display: inline-block; margin-left: 10px;">
+                    {{ selected ? selected : 'none' }}
+                </div>
+                <div style="color: #e44f4f; display: inline-block; margin-left: 10px;">
+                    {{ isPlayerCasting }}
+                </div>
+                <div style="color: #e4f079; display: inline-block; margin-left: 10px;">
+                    {{ isPlayerChanneling }}
+                </div>
+                <div style="color: #b3b3b3; display: inline-block; margin-left: 10px;">
+                    {{ keyPressed }}
+                </div>
+                <div style="color: #b3b3b3; display: inline-block; margin-left: 10px;">
+                    {{ hover }}
+                </div>
+                <div style="color: #8ecbee; display: inline-block; margin-left: 10px;">
+                    {{ holdClickHover }}
+                </div>
+                <div style="color: #5656ff; display: inline-block; margin-left: 10px;">
+                    {{ Number((player.mana).toFixed(2)) }}
+                </div>
+                <div style="color: #56ff5e; display: inline-block; margin-left: 10px;">
+                    {{ Number((player.hp).toFixed(2)) }}
+                </div>
+                <div style="color: #ae7eec; display: inline-block; margin-left: 10px;">
+                    {{ player.haste }}
+                </div>
+                <div style="color: #ffffff; display: inline-block; margin-left: 10px;">
+                    {{ Number(globalCooldown.toFixed(2)) }}
+                </div>
+                <div style="color: #ffffff; display: inline-block; margin-left: 10px;">
+                    {{ player.specialPower }} - {{ player.maxSpecialPower }}
+                </div>
+                <button @click="selectClass('Priest')"
+                    :style="'margin-left: 10px; color:'+classes.Priest.color+'; background-color: black;'">Priest</button>
+                <button @click="selectClass('Monk')"
+                    :style="'margin-left: 10px; color:'+classes.Monk.color+'; background-color: black;'">Monk</button>
+                <button @click="selectClass('Druid')"
+                    :style="'margin-left: 10px; color:'+classes.Druid.color+'; background-color: black;'">Druid</button>
+                <button @click="selectClass('Paladin')"
+                    :style="'margin-left: 10px; color:'+classes.Paladin.color+'; background-color: black;'">Paladin</button>
             </div>
-            <div style="color: #e44f4f; display: inline-block; margin-left: 10px;">
-                {{ isPlayerCasting }}
-            </div>
-            <div style="color: #e4f079; display: inline-block; margin-left: 10px;">
-                {{ isPlayerChanneling }}
-            </div>
-            <div style="color: #b3b3b3; display: inline-block; margin-left: 10px;">
-                {{ keyPressed }}
-            </div>
-            <div style="color: #b3b3b3; display: inline-block; margin-left: 10px;">
-                {{ hover }}
-            </div>
-            <div style="color: #8ecbee; display: inline-block; margin-left: 10px;">
-                {{ holdClickHover }}
-            </div>
-            <div style="color: #5656ff; display: inline-block; margin-left: 10px;">
-                {{ Number((player.mana).toFixed(2)) }}
-            </div>
-            <div style="color: #56ff5e; display: inline-block; margin-left: 10px;">
-                {{ Number((player.hp).toFixed(2)) }}
-            </div>
-            <div style="color: #ae7eec; display: inline-block; margin-left: 10px;">
-                {{ player.haste }}
-            </div>
-            <div style="color: #ffffff; display: inline-block; margin-left: 10px;">
-                {{ Number(globalCooldown.toFixed(2)) }}
-            </div>
-            <button @click="selectClass('Priest')" style="margin-left: 10px; color: #fff; background-color: black;">Priest</button>
-            <button @click="selectClass('Monk')" style="margin-left: 10px; color: #49eebc; background-color: black;">Monk</button>
-        </div>
 
-        <div class="flexframe">
-            <div class="rightMenu">
-                <div style="min-height: 8000px;"></div>
-            </div>
+            <div class="flexframe">
+                <div class="rightMenu">
+                    <div style="min-height: 8000px;"></div>
+                </div>
 
-            <div class="allyframecontainer">
-                <div v-for="(ally,index) in allies" :key="index" :class="'allyhpbar' +(selected==index?' selected':'')"
-                    :data-label="formatHpLabel(ally)" @click="()=>selected=index">
-                    <div class="statusEffectLittleFrame">
-                        <div v-for="(effect, index) in ally.activeEffects" :key="index"
-                            class="statusEffectLittleFrameIcon"
-                            v-bind:style="effect.buff ? 'border-color: #a5a5a5;' : 'border-color: #d10606;'">
-                            <div class="statusEffectCooldown"
-                                :style="'background: conic-gradient(#14161bb0 '+(360*(1-effect.duration/effect.maxDuration))+'deg, transparent '+(360*(1-effect.duration/effect.maxDuration))+'deg);'">
+                <div class="allyframecontainer">
+                    <div v-for="(ally,index) in allies" :key="index"
+                        :class="'allyhpbar' +(selected==index?' selected':'')" :data-label="formatHpLabel(ally)"
+                        @click="()=>selected=index"> <!-- @mouseover="()=>selected=index" -->
+                        <div class="statusEffectLittleFrame">
+                            <div v-for="(effect, index) in ally.activeEffects" :key="index"
+                                class="statusEffectLittleFrameIcon"
+                                v-bind:style="effect.buff ? 'border-color: #a5a5a5;' : 'border-color: #d10606;'">
+                                <div class="statusEffectCooldown"
+                                    :style="'background: conic-gradient(#14161bb0 '+(360*(1-effect.duration/effect.maxDuration))+'deg, transparent '+(360*(1-effect.duration/effect.maxDuration))+'deg);'">
+                                </div>
+                                <img :src="'img/spells/' + effect.icon + '.jpg'" />
                             </div>
-                            <img :src="'img/spells/' + effect.icon + '.jpg'" />
+                        </div>
+                        <div class="littleAllyHp">{{ formatlittleHpLabel(ally) }}</div>
+                        <span class="allyhpvalue" :style="'width:'+ally.hp/ally.maxHp*100+'%'"></span>
+                        <span v-if="ally.incomingHeal == true && ally.maxHp-ally.hp >= currentCastHeal"
+                            class="incomingHeal" :style="'width:'+currentCastHeal/ally.maxHp*100+'%'"></span>
+                        <span v-if="ally.incomingHeal == true && ally.maxHp-ally.hp < currentCastHeal"
+                            class="incomingHeal" :style="'width:'+(ally.maxHp-ally.hp)/ally.maxHp*100+'%'"></span>
+                        <span v-if="ally.hpShield > 0" class="shieldBar"
+                            :style="'width:'+ally.hpShield/ally.maxHp*100+'%'"></span>
+                        <span class="role"><img :src="'img/roles/'+ally.role+'.png'" /></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="playerInterface">
+                <div :class="'playerFrame' +(selected==player.id?' selected':'')" @click="()=>selected=player.id">
+                    <div class="playerHPbar" :data-label="Number((player.hp/player.maxHp*100).toFixed(1))+'%'">
+                        <div class="statusEffectBigFrame">
+                            <div v-if="player.maxSpecialPower > 0" class="playerSpecialPower">
+                                <div v-for="(specialPower, index) in player.maxSpecialPower-player.specialPower" :key="index"
+                                    class="emptyPaladinPower"></div>
+                                <div v-for="(specialPower, index) in player.specialPower" :key="index" class="fullPaladinPower">
+                                </div>
+                            </div>
+                            <div v-for="(effect, index) in player.activeEffects" :key="index"
+                                class="statusEffectBigFrameIcon"
+                                v-bind:style="effect.buff ? 'border-color: #a5a5a5;' : 'border-color: #d10606;'">
+                                <div class="statusEffectCooldown"
+                                    :style="'background: conic-gradient(#14161bb0 '+(360*(1-effect.duration/effect.maxDuration))+'deg, transparent '+(360*(1-effect.duration/effect.maxDuration))+'deg);'">
+                                </div>
+                                <img :src="'img/spells/' + effect.icon + '.jpg'" />
+                            </div>
+                        </div>
+                        <span class="playerHPbarContent" :style="'width:'+player.hp/player.maxHp*100+'%'"></span>
+                        <span v-if="player.incomingHeal == true && player.maxHp-player.hp >= currentCastHeal"
+                            class="incomingHeal" :style="'width:'+currentCastHeal/player.maxHp*100+'%'"></span>
+                        <span v-if="player.incomingHeal == true && player.maxHp-player.hp < currentCastHeal"
+                            class="incomingHeal" :style="'width:'+(player.maxHp-player.hp)/player.maxHp*100+'%'"></span>
+                        <span v-if="player.hpShield > 0" class="shieldBar"
+                            :style="'width:'+player.hpShield/player.maxHp*100+'%'"></span>
+                    </div>
+                    <div class="playerManabar" :data-label="Number((player.mana).toFixed(1))+'%'">
+                        <span class="playerManabarContent" :style="'width:'+player.mana+'%'"></span>
+                    </div>
+                </div>
+
+                <div class="pcastbar" :data-label="currentCastLabel">
+                    <div class="castbarbg" :style="'width:'+castbarBackground+'%'"></div>
+                    <div v-if="isPlayerCasting || isPlayerChanneling" class="castBarGlowing"
+                        :style="'left:'+spellProgressBar+'%'"></div>
+                    <div v-if="isPlayerCasting && incantTotalTime>=400" class="spellQueueIndicator"
+                        :style="'left:'+((incantTotalTime-spellQueueDelay)/incantTotalTime*100)+'%'"></div>
+                    <div v-if="isPlayerChanneling" class="channelTicksIndicator" v-for="i in spellchannelTicks"
+                        :style="'right:'+(100/spellchannelTicks*i)+'%'"></div>
+                    <div :class="{ pincantationtime:isPlayerCasting, pincantationtimeChanneling:isPlayerChanneling }"
+                        :style="'width:'+spellProgressBar+'%'"></div>
+                </div>
+
+                <div class="spellbar">
+                    <div v-for="(spell,index) in spells" :key="index" class="spellcontainer"
+                        @click="()=>useSpell(spell)" @mouseover="() => onSpellHover(spell)"
+                        @mouseleave="() => onSpellLeave(spell)" @mousedown="holdClickHoverOn"
+                        @mouseup="holdClickHoverOff" @touchstart="holdClickHoverOn" @touchend="holdClickHoverOff"
+                        @touchcancel="holdClickHoverOff">
+                        <img v-if="spell.icon" :src="'img/spells/'+spell.icon+'.jpg'" />
+                        <div v-if="spell.icon && (spell.mana>player.mana || spell.manapersecond>player.mana)"
+                            class="notEnoughManaSpell"></div>
+                        <div :class="{spellHover:!holdClickHover}"></div>
+                        <div :class="{spellHoverClickHold:holdClickHover}"></div>
+                        <div v-if="spell.currentCooldown != 0" class="spellCooldownBackground"
+                            :style="'background: conic-gradient(transparent '+(360*(1-spell.currentCooldown/spell.cooldown))+'deg, #14161bb0 '+(360*(1-spell.currentCooldown/spell.cooldown))+'deg);'">
+                        </div>
+                        <div v-if="spell.currentCooldown == 0 && underGCD" class="spellCooldownBackground"
+                            :style="'background: conic-gradient(transparent '+(360*(1-remainGCD/globalCooldown))+'deg, #14161bb0 '+(360*(1-remainGCD/globalCooldown))+'deg);'">
+                        </div>
+                        <div v-if="spell.currentCooldown != 0 && spell.currentCooldown>60000" class="spellCooldownTimer"
+                            style="font-size: 20px;">{{ Math.ceil(spell.currentCooldown/1000/60) }} m</div>
+                        <div v-if="spell.currentCooldown != 0 && spell.currentCooldown<=60000"
+                            class="spellCooldownTimer" style="font-size: 25px;">{{ Math.ceil(spell.currentCooldown/1000)
+                            }}</div>
+                    </div>
+                </div>
+
+                <div class="spellTooltipPosition" v-if="hover">
+                    <div class="spellTooltipTitle">
+                        {{ hoveredSpell.name }}
+                    </div>
+                    <div class="spellTooltipManaCost" v-if="hoveredSpell.mana>0 && !hoveredSpell.channeled">
+                        {{ hoveredSpell.mana }}% Mana
+                    </div>
+                    <div class="spellTooltipManaCost" v-if="hoveredSpell.manapersecond>0 && hoveredSpell.channeled">
+                        {{ Number((hoveredSpell.manapersecond * (1 + this.player.haste / 100)).toFixed(2)) }}% Mana per
+                        second
+                    </div>
+                    <div class="spellTooltipCastTime">
+                        <template v-if="hoveredSpell.incantTime>1">{{ Number((hoveredSpell.incantTime/1000).toFixed(2))
+                            }}
+                            sec cast</template>
+                        <template v-else-if="hoveredSpell.incantTime==0 && !hoveredSpell.channeled">Instant</template>
+                        <template v-else-if="hoveredSpell.channeled">Channeled</template>
+                        <div class="spellTooltipCooldown" v-if="hoveredSpell.cooldown>0">
+                            {{ Number((hoveredSpell.cooldown/1000/60).toFixed(1)) }} min cooldown
                         </div>
                     </div>
-                    <div class="littleAllyHp">{{ formatlittleHpLabel(ally) }}</div>
-                    <span class="allyhpvalue" :style="'width:'+ally.hp/ally.maxHp*100+'%'"></span>
-                    <span v-if="ally.incomingHeal == true && ally.maxHp-ally.hp >= currentCastHeal" class="incomingHeal"
-                        :style="'width:'+currentCastHeal/ally.maxHp*100+'%'"></span>
-                    <span v-if="ally.incomingHeal == true && ally.maxHp-ally.hp < currentCastHeal" class="incomingHeal"
-                        :style="'width:'+(ally.maxHp-ally.hp)/ally.maxHp*100+'%'"></span>
-                    <span v-if="ally.hpShield > 0" class="shieldBar"
-                        :style="'width:'+ally.hpShield/ally.maxHp*100+'%'"></span>
-                    <span class="role"><img :src="'img/roles/'+ally.role+'.png'" /></span>
-                </div>
-            </div>
-        </div>
-
-        <div class="playerInterface">
-            <div :class="'playerFrame' +(selected==player.id?' selected':'')" @click="()=>selected=player.id">
-                <div class="playerHPbar" :data-label="Number((player.hp/player.maxHp*100).toFixed(1))+'%'">
-                    <div class="statusEffectBigFrame">
-                        <div v-for="(effect, index) in player.activeEffects" :key="index"
-                            class="statusEffectBigFrameIcon"
-                            v-bind:style="effect.buff ? 'border-color: #a5a5a5;' : 'border-color: #d10606;'">
-                            <div class="statusEffectCooldown"
-                                :style="'background: conic-gradient(#14161bb0 '+(360*(1-effect.duration/effect.maxDuration))+'deg, transparent '+(360*(1-effect.duration/effect.maxDuration))+'deg);'">
-                            </div>
-                            <img :src="'img/spells/' + effect.icon + '.jpg'" />
-                        </div>
+                    <div class="spellTooltipDesc">
+                        <template v-if="!hoveredSpell.channeled">{{ replaceTooltipString(hoveredSpell.tooltip,
+                            hoveredSpell.effectAmount) }}</template>
+                        <template v-else>{{ replaceTooltipString(hoveredSpell.tooltip, hoveredSpell.channelEffectAmount,
+                            hoveredSpell.channelTime) }}</template>
                     </div>
-                    <span class="playerHPbarContent" :style="'width:'+player.hp/player.maxHp*100+'%'"></span>
-                    <span v-if="player.incomingHeal == true && player.maxHp-player.hp >= currentCastHeal"
-                        class="incomingHeal" :style="'width:'+currentCastHeal/player.maxHp*100+'%'"></span>
-                    <span v-if="player.incomingHeal == true && player.maxHp-player.hp < currentCastHeal"
-                        class="incomingHeal" :style="'width:'+(player.maxHp-player.hp)/player.maxHp*100+'%'"></span>
-                    <span v-if="player.hpShield > 0" class="shieldBar"
-                        :style="'width:'+player.hpShield/player.maxHp*100+'%'"></span>
-                </div>
-                <div class="playerManabar" :data-label="Number((player.mana).toFixed(1))+'%'">
-                    <span class="playerManabarContent" :style="'width:'+player.mana+'%'"></span>
-                </div>
-            </div>
-
-            <div class="pcastbar" :data-label="currentCastLabel">
-                <div class="castbarbg" :style="'width:'+castbarBackground+'%'"></div>
-                <div v-if="isPlayerCasting || isPlayerChanneling" class="castBarGlowing"
-                    :style="'left:'+spellProgressBar+'%'"></div>
-                <div v-if="isPlayerCasting && incantTotalTime>=400" class="spellQueueIndicator"
-                    :style="'left:'+((incantTotalTime-spellQueueDelay)/incantTotalTime*100)+'%'"></div>
-                <div v-if="isPlayerChanneling" class="channelTicksIndicator" v-for="i in spellchannelTicks"
-                    :style="'right:'+(100/spellchannelTicks*i)+'%'"></div>
-                <div :class="{ pincantationtime:isPlayerCasting, pincantationtimeChanneling:isPlayerChanneling }"
-                    :style="'width:'+spellProgressBar+'%'"></div>
-            </div>
-
-            <div class="spellbar">
-                <div v-for="(spell,index) in spells" :key="index" class="spellcontainer" @click="()=>useSpell(spell)"
-                    @mouseover="() => onSpellHover(spell)" @mouseleave="() => onSpellLeave(spell)"
-                    @mousedown="holdClickHoverOn" @mouseup="holdClickHoverOff" @touchstart="holdClickHoverOn"
-                    @touchend="holdClickHoverOff" @touchcancel="holdClickHoverOff">
-                    <img v-if="spell.icon" :src="'img/spells/'+spell.icon+'.jpg'" />
-                    <div v-if="spell.icon && (spell.mana>player.mana || spell.manapersecond>player.mana)"
-                        class="notEnoughManaSpell"></div>
-                    <div :class="{spellHover:!holdClickHover}"></div>
-                    <div :class="{spellHoverClickHold:holdClickHover}"></div>
-                    <div v-if="spell.currentCooldown != 0" class="spellCooldownBackground"
-                        :style="'background: conic-gradient(transparent '+(360*(1-spell.currentCooldown/spell.cooldown))+'deg, #14161bb0 '+(360*(1-spell.currentCooldown/spell.cooldown))+'deg);'">
-                    </div>
-                    <div v-if="spell.currentCooldown == 0 && underGCD" class="spellCooldownBackground"
-                        :style="'background: conic-gradient(transparent '+(360*(1-remainGCD/globalCooldown))+'deg, #14161bb0 '+(360*(1-remainGCD/globalCooldown))+'deg);'">
-                    </div>
-                    <div v-if="spell.currentCooldown != 0 && spell.currentCooldown>60000" class="spellCooldownTimer"
-                        style="font-size: 20px;">{{ Math.ceil(spell.currentCooldown/1000/60) }} m</div>
-                    <div v-if="spell.currentCooldown != 0 && spell.currentCooldown<=60000" class="spellCooldownTimer"
-                        style="font-size: 25px;">{{ Math.ceil(spell.currentCooldown/1000) }}</div>
-                </div>
-            </div>
-
-            <div class="spellTooltipPosition" v-if="hover">
-                <div class="spellTooltipTitle">
-                    {{ hoveredSpell.name }}
-                </div>
-                <div class="spellTooltipManaCost" v-if="hoveredSpell.mana>0 && !hoveredSpell.channeled">
-                    {{ hoveredSpell.mana }}% Mana
-                </div>
-                <div class="spellTooltipManaCost" v-if="hoveredSpell.manapersecond>0 && hoveredSpell.channeled">
-                    {{ Number((hoveredSpell.manapersecond * (1 + this.player.haste / 100)).toFixed(2)) }}% Mana per second
-                </div>
-                <div class="spellTooltipCastTime">
-                    <template v-if="hoveredSpell.incantTime>1">{{ Number((hoveredSpell.incantTime/1000).toFixed(2)) }}
-                        sec cast</template>
-                    <template v-else-if="hoveredSpell.incantTime==0 && !hoveredSpell.channeled">Instant</template>
-                    <template v-else-if="hoveredSpell.channeled">Channeled</template>
-                    <div class="spellTooltipCooldown" v-if="hoveredSpell.cooldown>0">
-                        {{ Number((hoveredSpell.cooldown/1000/60).toFixed(1)) }} min cooldown
-                    </div>
-                </div>
-                <div class="spellTooltipDesc">
-                    <template v-if="!hoveredSpell.channeled">{{ replaceTooltipString(hoveredSpell.tooltip,
-                        hoveredSpell.effectAmount) }}</template>
-                    <template v-else>{{ replaceTooltipString(hoveredSpell.tooltip, hoveredSpell.channelEffectAmount,
-                        hoveredSpell.channelTime) }}</template>
                 </div>
             </div>
         </div>
@@ -235,6 +259,8 @@
                     hp: 20000,
                     hpShield: 0,
                     mana: 100,
+                    maxSpecialPower: 0,
+                    specialPower: 0,
                     id: -1,
                     spellPower: 1000,
                     haste: 0,
@@ -321,180 +347,233 @@
                             }
                         }
                     },
+                    generateSP: function (value) {
+                        if (this.maxSpecialPower > this.specialPower) {
+                            this.specialPower += 1
+                        }
+                    },
                 },
                 spells: [
                 ],
-                spellPool: {
-                    Monk: [
-                    {
-                            id: 4,
-                            name: "Soothing Mist",
-                            mana: 0,
-                            manapersecond: 0.4,
-                            baseEffectAmount: 0.55,
-                            effectAmount: 0.55,
-                            tooltip: "Heals the target for #spellpower over #channeltime sec.  While channeling, Enveloping Mist and Vivify may be cast instantly on the target.",
-                            icon: "ability_monk_soothingmists",
-                            baseIncantTime: 0,
-                            incantTime: 0,
-                            baseChannelTime: 8000,
-                            channelTime: 8000,
-                            channelTicks: 8,
-                            channelEffectAmount: 4.4,
-                            channeled: true,
-                            cooldown: 0,
-                            currentCooldown: 0,
-                            affectGCD: true,
-                            deadTargetEffect: 0,
-                            key: 49,
-                            reactToStatus: null,
-                            applyStatus: 4,
-                            applyStatus2: null,
-                            use: function (game, state) {
-                                game.findEntityById(state.selectedEntityId).addHp(this.effectAmount)
+                classes: {
+                    Druid: {
+                        color: '#FF7C0A',
+                        spells: [
+                            {
+                                id: 3,
+                                name: "Rebirth",
+                                mana: 0,
+                                manapersecond: 0,
+                                baseEffectAmount: 0,
+                                effectAmount: 0,
+                                tooltip: "Returns the spirit to the body, restoring a dead target to life with 100% health. Castable in combat.",
+                                icon: "spell_nature_reincarnation",
+                                baseIncantTime: 2000,
+                                incantTime: 2000,
+                                baseChannelTime: 0,
+                                channelTime: 0,
+                                channelTicks: 0,
+                                channelEffectAmount: 0,
+                                channeled: false,
+                                cooldown: 600000,
+                                currentCooldown: 0,
+                                affectGCD: true,
+                                deadTargetEffect: 1,
+                                key: 51,
+                                reactToStatus: null,
+                                applyStatus: null,
+                                applyStatus2: null,
+                                use: function (game, state) {
+                                    game.findEntityById(state.selectedEntityId).addHpPercent(100)
+                                },
                             },
-                        },
-                    ],
-                    Priest: [ // Name of the class which have the following spells (for the moment there is only one class because the game isn't achieved yet, obviously)
-                        {
-                            id: 1, // Id of the spell
-                            name: "Flash Heal", // Name of the spell
-                            mana: 3.6, // Mana used by the spell
-                            manapersecond: 0,  // Mana per second use by the spell, used only by channeled spells
-                            baseEffectAmount: 2.03, // Base heal amount, this value never change and is used by some functions
-                            effectAmount: 2.03, // Same value as spell.use if the spell addHp (used for the heal amount preview)
-                            tooltip: "A fast spell that heals an ally for #spellpower.",  // Tooltip of the spell which appear when the spell is hover
-                            icon: "spell_holy_flashheal", // Icon of the spell
-                            baseIncantTime: 1500, // Base spell incant time, this value never change and is used by some functions
-                            incantTime: 1500, // Actual incant time, by default it have the same value as the base one but it change depending of the player haste
-                            baseChannelTime: 0, // Same as baseIncantTime but for channeled spells
-                            channelTime: 0, // Channeling time
-                            channelTicks: 0, // How many time between every ticks in channeling to trigger the effect
-                            channelEffectAmount: 0, // total heal amount from the channeling
-                            channeled: false, // false : the spell is a normal one (castable), true : the spell is a channeled one
-                            cooldown: 0, // The cooldown applied after the cast of the spell
-                            currentCooldown: 0, // Current cooldown, this value change if the spell have a cooldown, after it've been used
-                            affectGCD: true, // If using this spell affect the GCD
-                            deadTargetEffect: 0, // 0 = false; 1 = true ==> if the spell is only usable on dead allies (only for battle rez, i think c:)
-                            key: 49, // Keybinding, should change in several updates, when I'll added the key on the spellbar, not on the spell itself
-                            reactToStatus: null, // Trigger an effect if the spell is cast on an entity who have the following effect id
-                            applyStatus: null, // The status ID (buff or debuff) applied after the spell
-                            applyStatus2: null, // Same as applyStatus but if the spell trigger a supplement status
-                            use: function (game, state) {  // Function of the spell when it is used
-                                game.findEntityById(state.selectedEntityId).addHp(this.effectAmount) // Here, the spell adds hp to the target
+                        ],
+                    },
+                    Monk: {
+                        color: '#00FF98',
+                        spells: [
+                            {
+                                id: 4,
+                                name: "Soothing Mist",
+                                mana: 0,
+                                manapersecond: 0.4,
+                                baseEffectAmount: 0.55,
+                                effectAmount: 0.55,
+                                tooltip: "Heals the target for #spellpower over #channeltime sec.  While channeling, Enveloping Mist and Vivify may be cast instantly on the target.",
+                                icon: "ability_monk_soothingmists",
+                                baseIncantTime: 0,
+                                incantTime: 0,
+                                baseChannelTime: 8000,
+                                channelTime: 8000,
+                                channelTicks: 8,
+                                channelEffectAmount: 4.4,
+                                channeled: true,
+                                cooldown: 0,
+                                currentCooldown: 0,
+                                affectGCD: true,
+                                deadTargetEffect: 0,
+                                key: 49,
+                                reactToStatus: null,
+                                applyStatus: 4,
+                                applyStatus2: null,
+                                use: function (game, state) {
+                                    game.findEntityById(state.selectedEntityId).addHp(this.effectAmount)
+                                },
                             },
-                        },
-                        {
-                            id: 2,
-                            name: "Heal",
-                            mana: 2.4,
-                            manapersecond: 0,
-                            baseEffectAmount: 2.95,
-                            effectAmount: 2.95,
-                            tooltip: "An efficient spell that heals an ally for #spellpower.",
-                            icon: "spell_holy_greaterheal",
-                            baseIncantTime: 2500,
-                            incantTime: 2500,
-                            baseChannelTime: 0,
-                            channelTime: 0,
-                            channelTicks: 0,
-                            channelEffectAmount: 0,
-                            channeled: false,
-                            cooldown: 0,
-                            currentCooldown: 0,
-                            affectGCD: true,
-                            deadTargetEffect: 0,
-                            key: 50,
-                            reactToStatus: null,
-                            applyStatus: null,
-                            applyStatus2: null,
-                            use: function (game, state) {
-                                game.findEntityById(state.selectedEntityId).addHp(this.effectAmount)
+                        ],
+                    },
+                    Paladin: {
+                        color: '#F48CBA',
+                        specialPower: true,
+                        spells: [
+                            {
+                                id: 7,
+                                name: "Flash of Light",
+                                mana: 4, // Idk if it's the real value, I calculated it myself on a trial character
+                                manapersecond: 0,
+                                useSP: false, // if the spell use SP as cost
+                                spCost: null, // number of SP used by the spell
+                                baseEffectAmount: 1.68,
+                                effectAmount: 1.68,
+                                tooltip: "Expends a large amount of mana to quickly heal a friendly target for #spellpower.",
+                                icon: "spell_holy_flashheal",
+                                baseIncantTime: 1500,
+                                incantTime: 1500,
+                                baseChannelTime: 0,
+                                channelTime: 0,
+                                channelTicks: 0,
+                                channelEffectAmount: 0,
+                                channeled: false,
+                                cooldown: 0,
+                                currentCooldown: 0,
+                                affectGCD: true,
+                                deadTargetEffect: 0,
+                                key: 49,
+                                reactToStatus: null,
+                                applyStatus: null,
+                                applyStatus2: null,
+                                use: function (game, state) {
+                                    game.findEntityById(state.selectedEntityId).addHp(this.effectAmount)
+                                    game.player.generateSP(1) // generate one point of special power (SP)
+                                },
                             },
-                        },
-                        {
-                            id: 3,
-                            name: "Rebirth",
-                            mana: 0,
-                            manapersecond: 0,
-                            baseEffectAmount: 0,
-                            effectAmount: 0,
-                            tooltip: "Returns the spirit to the body, restoring a dead target to life with 100% health. Castable in combat.",
-                            icon: "spell_nature_reincarnation",
-                            baseIncantTime: 2000,
-                            incantTime: 2000,
-                            baseChannelTime: 0,
-                            channelTime: 0,
-                            channelTicks: 0,
-                            channelEffectAmount: 0,
-                            channeled: false,
-                            cooldown: 600000,
-                            currentCooldown: 0,
-                            affectGCD: true,
-                            deadTargetEffect: 1,
-                            key: 51,
-                            reactToStatus: null,
-                            applyStatus: null,
-                            applyStatus2: null,
-                            use: function (game, state) {
-                                game.findEntityById(state.selectedEntityId).addHpPercent(100)
+                        ],
+                    },
+                    Priest: {
+                        color: '#FFFFFF',
+                        spells: [ // Name of the class which have the following spells (for the moment there is only one class because the game isn't achieved yet, obviously)
+                            {
+                                id: 1, // Id of the spell
+                                name: "Flash Heal", // Name of the spell
+                                mana: 3.6, // Mana used by the spell
+                                manapersecond: 0,  // Mana per second use by the spell, used only by channeled spells
+                                baseEffectAmount: 2.03, // Base heal amount, this value never change and is used by some functions
+                                effectAmount: 2.03, // Same value as spell.use if the spell addHp (used for the heal amount preview)
+                                tooltip: "A fast spell that heals an ally for #spellpower.",  // Tooltip of the spell which appear when the spell is hover
+                                icon: "spell_holy_flashheal", // Icon of the spell
+                                baseIncantTime: 1500, // Base spell incant time, this value never change and is used by some functions
+                                incantTime: 1500, // Actual incant time, by default it have the same value as the base one but it change depending of the player haste
+                                baseChannelTime: 0, // Same as baseIncantTime but for channeled spells
+                                channelTime: 0, // Channeling time
+                                channelTicks: 0, // How many time between every ticks in channeling to trigger the effect
+                                channelEffectAmount: 0, // total heal amount from the channeling
+                                channeled: false, // false : the spell is a normal one (castable), true : the spell is a channeled one
+                                cooldown: 0, // The cooldown applied after the cast of the spell
+                                currentCooldown: 0, // Current cooldown, this value change if the spell have a cooldown, after it've been used
+                                affectGCD: true, // If using this spell affect the GCD
+                                deadTargetEffect: 0, // 0 = false; 1 = true ==> if the spell is only usable on dead allies (only for battle rez, i think c:)
+                                key: 49, // Keybinding, should change in several updates, when I'll added the key on the spellbar, not on the spell itself
+                                reactToStatus: null, // Trigger an effect if the spell is cast on an entity who have the following effect id
+                                applyStatus: null, // The status ID (buff or debuff) applied after the spell
+                                applyStatus2: null, // Same as applyStatus but if the spell trigger a supplement status
+                                use: function (game, state) {  // Function of the spell when it is used
+                                    game.findEntityById(state.selectedEntityId).addHp(this.effectAmount) // Here, the spell adds hp to the target
+                                },
                             },
-                        },
-                        {
-                            id: 5,
-                            name: "Power Word: Shield",
-                            mana: 3.1,
-                            manapersecond: 0,
-                            baseEffectAmount: 1.65,
-                            effectAmount: 1.65,
-                            tooltip: "Shields an ally for 15 sec, absorbing #spellpower damage.  You cannot shield the target again for 7.5 sec.",
-                            icon: "spell_holy_powerwordshield",
-                            baseIncantTime: 0,
-                            incantTime: 0,
-                            baseChannelTime: 0,
-                            channelTime: 0,
-                            channelTicks: 0,
-                            channelEffectAmount: 0,
-                            channeled: false,
-                            cooldown: 0,
-                            currentCooldown: 0,
-                            affectGCD: true,
-                            deadTargetEffect: 0,
-                            key: 53,
-                            reactToStatus: 2,
-                            applyStatus: 1,
-                            applyStatus2: 2,
-                            use: function (game, state) {
+                            {
+                                id: 2,
+                                name: "Heal",
+                                mana: 2.4,
+                                manapersecond: 0,
+                                baseEffectAmount: 2.95,
+                                effectAmount: 2.95,
+                                tooltip: "An efficient spell that heals an ally for #spellpower.",
+                                icon: "spell_holy_greaterheal",
+                                baseIncantTime: 2500,
+                                incantTime: 2500,
+                                baseChannelTime: 0,
+                                channelTime: 0,
+                                channelTicks: 0,
+                                channelEffectAmount: 0,
+                                channeled: false,
+                                cooldown: 0,
+                                currentCooldown: 0,
+                                affectGCD: true,
+                                deadTargetEffect: 0,
+                                key: 50,
+                                reactToStatus: null,
+                                applyStatus: null,
+                                applyStatus2: null,
+                                use: function (game, state) {
+                                    game.findEntityById(state.selectedEntityId).addHp(this.effectAmount)
+                                },
                             },
-                        },
-                        {
-                            id: 5,
-                            name: "Renew",
-                            mana: 1.8,
-                            manapersecond: 0,
-                            baseEffectAmount: 1.6,
-                            effectAmount: 1.6,
-                            tooltip: "Fill the target with faith in the light, healing for #spellpower over 15 sec.",
-                            icon: "spell_holy_renew",
-                            baseIncantTime: 0,
-                            incantTime: 0,
-                            baseChannelTime: 0,
-                            channelTime: 0,
-                            channelTicks: 0,
-                            channelEffectAmount: 0,
-                            channeled: false,
-                            cooldown: 0,
-                            currentCooldown: 0,
-                            affectGCD: true,
-                            deadTargetEffect: 0,
-                            key: 54,
-                            reactToStatus: null,
-                            applyStatus: 3,
-                            applyStatus2: null,
-                            use: function (game, state) {
+                            {
+                                id: 5,
+                                name: "Power Word: Shield",
+                                mana: 3.1,
+                                manapersecond: 0,
+                                baseEffectAmount: 1.65,
+                                effectAmount: 1.65,
+                                tooltip: "Shields an ally for 15 sec, absorbing #spellpower damage.  You cannot shield the target again for 7.5 sec.",
+                                icon: "spell_holy_powerwordshield",
+                                baseIncantTime: 0,
+                                incantTime: 0,
+                                baseChannelTime: 0,
+                                channelTime: 0,
+                                channelTicks: 0,
+                                channelEffectAmount: 0,
+                                channeled: false,
+                                cooldown: 0,
+                                currentCooldown: 0,
+                                affectGCD: true,
+                                deadTargetEffect: 0,
+                                key: 51,
+                                reactToStatus: 2,
+                                applyStatus: 1,
+                                applyStatus2: 2,
+                                use: function (game, state) {
+                                },
                             },
-                        },
-                    ],
+                            {
+                                id: 6,
+                                name: "Renew",
+                                mana: 1.8,
+                                manapersecond: 0,
+                                baseEffectAmount: 1.6,
+                                effectAmount: 1.6,
+                                tooltip: "Fill the target with faith in the light, healing for #spellpower over 15 sec.",
+                                icon: "spell_holy_renew",
+                                baseIncantTime: 0,
+                                incantTime: 0,
+                                baseChannelTime: 0,
+                                channelTime: 0,
+                                channelTicks: 0,
+                                channelEffectAmount: 0,
+                                channeled: false,
+                                cooldown: 0,
+                                currentCooldown: 0,
+                                affectGCD: true,
+                                deadTargetEffect: 0,
+                                key: 52,
+                                reactToStatus: null,
+                                applyStatus: 3,
+                                applyStatus2: null,
+                                use: function (game, state) {
+                                },
+                            },
+                        ],
+                    },
                 },
                 statusEffects: [ // not final, still thinking about how I can do this simply without reworking all my code
                     {
@@ -933,7 +1012,7 @@
                 selectClass(clazz) {
                     this.spells.length = 0;
 
-                    for (const spell of this.spellPool[clazz]) {
+                    for (const spell of this.classes[clazz].spells) {
                         this.spells.push({
                             ...spell,
                         });
@@ -942,6 +1021,12 @@
                     const totalspells = 24 - this.spells.length
                     for (let i = 0; i < totalspells; i++) {
                         this.addSpell()
+                    }
+                    if (this.classes[clazz].specialPower) {
+                        this.player.maxSpecialPower = 5 // only paladin can use special power to heal, so I set it to 5
+                    } else {
+                        this.player.maxSpecialPower = 0
+                        this.player.specialPower = 0
                     }
                     this.player.clazz = clazz
                     this.statsCalculation()
@@ -956,6 +1041,9 @@
                     }
                     if (spell.currentCooldown <= 0 && this.player.mana - spell.mana >= 0 && this.player.mana - spell.manapersecond >= 0) {
                         if (!spell.channeled) {
+                            if (spell.useSP && this.player.specialPower < spell.spCost) {
+                                return
+                            }
                             /*if (spell.incantTime <= 1000) {  // change the spellQueue delay if the spell incant time is lower than 1sec
                                 this.spellQueueDelay = spell.incantTime * 0.5
                             }*/
@@ -1061,6 +1149,7 @@
                                             }
                                         }
                                         spell.currentCooldown = spell.cooldown
+                                        if (spell.useSP) { this.player.specialPower -= spell.spCost }
                                         this.player.addMana(-spell.mana)
                                         this.currentCastAnim = -1
                                         this.currentCast = -1
@@ -1088,12 +1177,12 @@
                             if (!this.underGCD) {
                                 if (spell.name == this.currentCastName) {
                                     this.breakChanneling = 1
-                                    if (this.precedentTargetId != this.findEntityById(selectedEntityId).id){
+                                    if (this.precedentTargetId != this.findEntityById(selectedEntityId).id) {
                                         this.channeledSpellBreakBuff(this.findEntityById(this.precedentTargetId), spell)
                                     }
                                 }
                                 if (this.isPlayerCasting) { return }
-                                this.currentCastName = spell.name         
+                                this.currentCastName = spell.name
                                 if (spell.deadTargetEffect == 0) { // verify if target is dead
                                     if (this.findEntityById(selectedEntityId).hp <= 0) { // healing spell (break if target is dead)
                                         this.breakUseSpell()
