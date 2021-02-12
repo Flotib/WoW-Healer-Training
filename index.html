@@ -57,14 +57,19 @@
         </div>
 
         <div class="flexframe">
+            <div class="rightMenu">
+                <div style="min-height: 8000px;"></div>
+            </div>
+
             <div class="allyframecontainer">
                 <div v-for="(ally,index) in allies" :key="index" :class="'allyhpbar' +(selected==index?' selected':'')"
                     :data-label="formatHpLabel(ally)" @click="()=>selected=index">
                     <div class="statusEffectLittleFrame">
                         <div v-for="(effect, index) in ally.activeEffects" :key="index"
-                            class="statusEffectLittleFrameIcon" v-bind:style="effect.buff ? 'border-color: #a5a5a5;' : 'border-color: #d10606;'">
+                            class="statusEffectLittleFrameIcon"
+                            v-bind:style="effect.buff ? 'border-color: #a5a5a5;' : 'border-color: #d10606;'">
                             <div class="statusEffectCooldown"
-                                :style="'background: conic-gradient(#14161bb0 '+(360*(1-effect.duration/effect.baseDuration))+'deg, transparent '+(360*(1-effect.duration/effect.baseDuration))+'deg);'">
+                                :style="'background: conic-gradient(#14161bb0 '+(360*(1-effect.duration/effect.maxDuration))+'deg, transparent '+(360*(1-effect.duration/effect.maxDuration))+'deg);'">
                             </div>
                             <img :src="'img/spells/' + effect.icon + '.jpg'" />
                         </div>
@@ -88,9 +93,10 @@
                 <div class="playerHPbar" :data-label="Number((player.hp/player.maxHp*100).toFixed(1))+'%'">
                     <div class="statusEffectBigFrame">
                         <div v-for="(effect, index) in player.activeEffects" :key="index"
-                            class="statusEffectBigFrameIcon" v-bind:style="effect.buff ? 'border-color: #a5a5a5;' : 'border-color: #d10606;'">
+                            class="statusEffectBigFrameIcon"
+                            v-bind:style="effect.buff ? 'border-color: #a5a5a5;' : 'border-color: #d10606;'">
                             <div class="statusEffectCooldown"
-                                :style="'background: conic-gradient(#14161bb0 '+(360*(1-effect.duration/effect.baseDuration))+'deg, transparent '+(360*(1-effect.duration/effect.baseDuration))+'deg);'">
+                                :style="'background: conic-gradient(#14161bb0 '+(360*(1-effect.duration/effect.maxDuration))+'deg, transparent '+(360*(1-effect.duration/effect.maxDuration))+'deg);'">
                             </div>
                             <img :src="'img/spells/' + effect.icon + '.jpg'" />
                         </div>
@@ -220,6 +226,7 @@
                 underGCD: false,
                 spellQueueDelay: 400,
                 spellchannelTicks: 0,
+                precedentTargetId: null,
                 allies: [
                 ],
                 player: {
@@ -424,7 +431,7 @@
                             deadTargetEffect: 0,
                             key: 52,
                             reactToStatus: null,
-                            applyStatus: null,
+                            applyStatus: 4,
                             applyStatus2: null,
                             use: function (game, state) {
                                 game.findEntityById(state.selectedEntityId).addHp(this.effectAmount)
@@ -492,6 +499,7 @@
                         name: "Power Word: Shield", // its name
                         buff: true, // false if it's a debuff, used to change the border color
                         type: "magic", // curse, disease, magic, poison --> for dispelling
+                        fromChannelingSpell: false, // if it's a buff given by a channeled spell
                         baseEffect: 1.65,
                         effect: 1.65, // cast one time in a buff where ticks=0, else it is cast at every ticks -- applyEffect
                         effectAffectedByStats: true,
@@ -503,7 +511,9 @@
                         endEffectValue: null,
                         endEffectAffectedByStats: false,
                         baseDuration: 15000, // base duration of the statusEffect
+                        maxDuration: 15000, // max value of the duration, only affect by stats
                         duration: 15000, // duration
+                        durationAffectedByStats: false,
                         ticks: null, // number of times the effect is triggered. Null if the buff don't repeat the effect
                         beingRenewed: false, // Always false, used to renewed the effect in the function
                         tooltip: "test",
@@ -520,6 +530,7 @@
                         name: "Weakened Soul",
                         buff: false,
                         type: null,
+                        fromChannelingSpell: false,
                         baseEffect: null,
                         effect: null,
                         effectAffectedByStats: false,
@@ -531,7 +542,9 @@
                         endEffectValue: null,
                         endEffectAffectedByStats: false,
                         baseDuration: 7500,
+                        maxDuration: 7500,
                         duration: 7500,
+                        durationAffectedByStats: false,
                         ticks: null,
                         beingRenewed: false,
                         tooltip: "test",
@@ -542,6 +555,7 @@
                         name: "Renew",
                         buff: true,
                         type: "magic",
+                        fromChannelingSpell: false,
                         baseEffect: 0.32,
                         effect: 0.32,
                         effectAffectedByStats: true,
@@ -553,7 +567,9 @@
                         endEffectValue: null,
                         endEffectAffectedByStats: false,
                         baseDuration: 15000,
+                        maxDuration: 15000,
                         duration: 15000,
+                        durationAffectedByStats: false,
                         ticks: 5,
                         beingRenewed: false,
                         tooltip: "test",
@@ -561,6 +577,32 @@
                         applyEffect: function (game, state) {
                             game.findEntityById(state.selectedEntityId).addHp(this.effect)
                         },
+                    },
+                    {
+                        id: 4,
+                        name: "Soothing Mist",
+                        buff: true,
+                        type: null,
+                        fromChannelingSpell: true,
+                        baseEffect: 0.55,
+                        effect: 0.55,
+                        effectAffectedByStats: true,
+                        baseEffect2: null,
+                        effect2: null,
+                        effect2AffectedByStats: false,
+                        haveEndEffect: false,
+                        baseEndEffectValue: null,
+                        endEffectValue: null,
+                        endEffectAffectedByStats: false,
+                        baseDuration: 8000,
+                        maxDuration: 8000,
+                        duration: 8000,
+                        durationAffectedByStats: true,
+                        ticks: null,
+                        beingRenewed: false,
+                        tooltip: "test",
+                        icon: "ability_monk_soothingmists",
+                        applyEffect: function (game, state) {},
                     },
                 ],
             },
@@ -843,6 +885,13 @@
                     this.player.mana = 0
                 },
 
+                channeledSpellBreakBuff(target, spell) {
+                    target.activeEffects.removeIf((x) => x.id == spell.applyStatus)
+                    target.activeShields.removeIf((x) => x.id == spell.applyStatus)
+                    target.activeEffects.removeIf((x) => x.id == spell.applyStatus2)
+                    target.activeShields.removeIf((x) => x.id == spell.applyStatus2)
+                },
+
                 statsCalculation() { // toDo : do the same for effects
                     for (const spell of this.spells) {
                         //haste
@@ -856,6 +905,11 @@
                         }
                     }
                     for (const effect of this.statusEffects) {
+                        //haste
+                        if (effect.durationAffectedByStats) {
+                            effect.maxDuration = effect.baseDuration / (1 + this.player.haste / 100)
+                            effect.duration = effect.baseDuration / (1 + this.player.haste / 100)
+                        }
                         //spellpower & versatility
                         if (effect.effectAffectedByStats) {
                             effect.effect = Math.round(effect.baseEffect * this.player.spellPower * (1 + this.player.versatility / 100))
@@ -950,6 +1004,7 @@
                                 }
                                 this.currentCast = 1
                                 this.incantTotalTime = spell.incantTime;
+                                this.precedentTargetId = this.findEntityById(selectedEntityId).id
                                 let remain = spell.incantTime;
                                 let whle = () => {
                                     if (this.breakIncantation == 1) { //break casting
@@ -1024,10 +1079,12 @@
                             if (!this.underGCD) {
                                 if (spell.name == this.currentCastName) {
                                     this.breakChanneling = 1
+                                    if (this.precedentTargetId != this.findEntityById(selectedEntityId).id){
+                                        this.channeledSpellBreakBuff(this.findEntityById(this.precedentTargetId), spell)
+                                    }
                                 }
                                 if (this.isPlayerCasting) { return }
-                                this.currentCastName = spell.name
-                                const selectedEntityId = this.selectedEntity.id
+                                this.currentCastName = spell.name         
                                 if (spell.deadTargetEffect == 0) { // verify if target is dead
                                     if (this.findEntityById(selectedEntityId).hp <= 0) { // healing spell (break if target is dead)
                                         this.breakUseSpell()
@@ -1040,6 +1097,14 @@
                                 this.currentCast = 1
                                 this.incantChannelTime = spell.channelTime;
                                 this.channelTicksInterval = spell.channelTime / spell.channelTicks // channeled ticks interval's now here
+                                if (spell.applyStatus != null) {
+                                    this.applyStatusEffect(this.findEntityById(selectedEntityId), this.findStatusEffectById(spell.applyStatus))
+
+                                    if (spell.applyStatus2 != null) {
+                                        this.applyStatusEffect(this.findEntityById(selectedEntityId), this.findStatusEffectById(spell.applyStatus2))
+                                    }
+                                }
+                                this.precedentTargetId = this.findEntityById(selectedEntityId).id
                                 let remain = spell.channelTime;
                                 let ticks = this.channelTicksInterval
                                 let whle = () => {
@@ -1049,6 +1114,7 @@
                                         return
                                     } else if (this.breakChanneling == 2) { //escape key
                                         this.breakChanneling = 0
+                                        this.channeledSpellBreakBuff(this.findEntityById(selectedEntityId), spell)
                                         this.breakUseSpell()
                                         return
                                     }
@@ -1078,6 +1144,7 @@
                                     if (Math.round(remain) > 0) {
                                         this.currentCastAnim = setTimeout(whle, 1000 / 60);
                                     } else {
+                                        this.channeledSpellBreakBuff(this.findEntityById(selectedEntityId), spell)
                                         spell.currentCooldown = spell.cooldown
                                         this.currentCastAnim = -1
                                         this.currentCast = -1
@@ -1110,11 +1177,11 @@
 
                         target.activeEffects.push(effect)
 
-                        effect.duration = effect.baseDuration
+                        effect.duration = effect.maxDuration
                         let selectedEntityId = this.selectedEntity.id
 
                         if (effect.ticks != null) {
-                            let ticksInterval = effect.baseDuration / effect.ticks
+                            let ticksInterval = effect.maxDuration / effect.ticks
                             if (effect.baseEffect2 != null) {
                                 effect.applyEffect2(this, { selectedEntityId })
                             }
@@ -1124,8 +1191,8 @@
                                     if (effect.baseEffect2 != null) {
                                         effect.applyEffect2(this, { selectedEntityId })
                                     }
-                                    effect.duration = effect.baseDuration
-                                    ticksInterval = effect.baseDuration / effect.ticks
+                                    effect.duration = effect.maxDuration
+                                    ticksInterval = effect.maxDuration / effect.ticks
                                     effect.beingRenewed = false
                                 }
                                 if (target.hp <= 0) {
@@ -1137,7 +1204,7 @@
                                 ticksInterval -= 1000 / 20
                                 if (Math.round(ticksInterval) <= 0) {
                                     effect.applyEffect(this, { selectedEntityId })
-                                    ticksInterval = effect.baseDuration / effect.ticks - 1000 / 20
+                                    ticksInterval = effect.maxDuration / effect.ticks - 1000 / 20
                                 }
                                 if (Math.round(effect.duration) > 0) {
                                     setTimeout(elune, 1000 / 20)
@@ -1170,8 +1237,13 @@
                                             effect.applyEffect2(this, { selectedEntityId })
                                         }
                                     }
-                                    effect.duration = effect.baseDuration
+                                    effect.duration = effect.maxDuration
                                     effect.beingRenewed = false
+                                }
+                                if (effect.fromChannelingSpell) {
+                                    if (!this.isPlayerChanneling) {
+                                        effect.duration = 0
+                                    }
                                 }
                                 if (target.hp <= 0) {
                                     effect.duration = 0
