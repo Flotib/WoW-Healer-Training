@@ -77,15 +77,36 @@
 
             <div class="flexframe">
                 <div class="rightMenuArea">
-                    <input type="checkbox" />
+                    <input id="rmenubuttoninput" type="checkbox" />
                     <div class="rightMenuButton">
                         <span></span>
                         <span></span>
                         <span></span>
                     </div>
                     <div class="rightMenu">
-                        <h2>Group composition</h2>
-                        <div style="min-height: 8000px;"></div>
+                        <h2 style="border: 1px solid #fff; padding: 5px 15px 5px 15px; text-shadow: #ff0000 0px 0 16px; font-weight: 400;">Group composition</h2>
+                        <div style="margin-top: 10px;">
+                            <h3 style="font-weight: 400; color: #FF7D01">Raid :</h3> <!--Minus 1 healer because... Player is one of them-->
+                            <!--<div style="box-shadow: #ff7c01 0px 0 8px; width: 250px; background-color: #ff7c01;">-->
+                            <button @click="removeAllAllies(); addAlly(2, 'tank'); addAlly(1, 'healer'); addAlly(6, 'dps');">2/2/6</button>
+                            <button @click="removeAllAllies(); addAlly(2, 'tank'); addAlly(2, 'healer'); addAlly(9, 'dps');">2/3/9</button>
+                            <button @click="removeAllAllies(); addAlly(2, 'tank'); addAlly(3, 'healer'); addAlly(14, 'dps');">2/4/14</button>
+                        <!--</div>-->
+                        </div>
+                        <div style="margin-top: 15px;">
+                            <h3 style="font-weight: 400; color: #AAABFE">Party :</h3>
+                            <button @click="removeAllAllies(); addAlly(1, 'tank'); addAlly(3, 'dps');">1/1/3</button>
+                        </div>
+                        <div style="margin: 15px 0px 25px 0px;">
+                            <h3 style="font-weight: 400; color: #E6CC80">Custom :</h3>
+                            <div style="display: inline-flex;">
+                                <img src="img/roles/tank.png" style="transform: scale(0.8);"><input type="number" v-model="allyTank" class="rightMenuCustomInput">
+                                <img src="img/roles/healer.png" style="transform: scale(0.8);"><input type="number" v-model="allyHealer" class="rightMenuCustomInput">
+                                <img src="img/roles/dps.png" style="transform: scale(0.8);"><input type="number" v-model="allyDps" class="rightMenuCustomInput">
+                            </div>
+                            <button @click="removeAllAllies(); addAlly(allyTank, 'tank'); addAlly(allyHealer, 'healer'); addAlly(allyDps, 'dps');">Add</button>
+                        </div>
+                        <hr style="width: 75%;">
                     </div>
                 </div>
 
@@ -267,6 +288,9 @@
                 spellQueueDelay: 400,
                 spellchannelTicks: 0,
                 precedentTargetId: null,
+                allyTank: 0,
+                allyHealer: 0,
+                allyDps: 0,
                 allies: [
                 ],
                 player: {

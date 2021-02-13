@@ -631,7 +631,7 @@ html {
     z-index: 0;
 }
 
-.rightMenuArea input {
+.rightMenuArea #rmenubuttoninput {
     margin: 8px 8px 0px 0px;
     position: fixed;
     width: 35px;
@@ -641,18 +641,18 @@ html {
     transition-duration: 400ms;
 }
 
-.rightMenuArea input:checked {
+.rightMenuArea #rmenubuttoninput:checked {
     transition-duration: 400ms;
     transform: scale(0.89) translateY(5px);
 }
 
-.rightMenuArea input:checked ~ .rightMenuButton {
+.rightMenuArea #rmenubuttoninput:checked ~ .rightMenuButton {
     transition-duration: 400ms;
     transform: scale(0.89) translateY(5px);
     box-shadow: none;
 }
 
-.rightMenuArea input:checked ~ .rightMenuButton {
+.rightMenuArea #rmenubuttoninput:checked ~ .rightMenuButton {
     background-color: #a51515;
 }
 
@@ -678,17 +678,17 @@ html {
     margin: 3px 0px 3px 0px;
 }
 
-.rightMenuArea input:checked ~ .rightMenuButton span {
+.rightMenuArea #rmenubuttoninput:checked ~ .rightMenuButton span {
     transform: rotate(45deg) translate(-6.5px, -6px);
     background: #fff;
 }
 
-.rightMenuArea input:checked ~ .rightMenuButton span:nth-last-child(2) {
+.rightMenuArea #rmenubuttoninput:checked ~ .rightMenuButton span:nth-last-child(2) {
     transform: rotate(-45deg) translate(0, 0px);
 }
 
 
-.rightMenuArea input:checked ~ .rightMenuButton span:nth-last-child(3) {
+.rightMenuArea #rmenubuttoninput:checked ~ .rightMenuButton span:nth-last-child(3) {
     opacity: 0;
 }
 
@@ -705,6 +705,7 @@ html {
     border: 1px solid #fff;
     border-right: 0;
     border-radius: 5px;
+    flex-wrap: wrap;
     justify-content: center;
     text-align: center;
     overflow-x: hidden;
@@ -715,7 +716,32 @@ html {
     transition: transform 0.5s cubic-bezier(0.77,0.2,0.05,1.0);
 }
 
-.rightMenuArea input:checked ~ .rightMenu {
+.rightMenu button {
+    padding-top: 2px;
+    width: 240px;
+    height: 25px;
+    border: 3px groove #696969;
+    border-radius: 4px;
+    font-size: 16px;
+    color: #fff;
+    font-weight: 500;
+    background: linear-gradient(0deg, #390308 0%, #560107 28%, #640404 50%, #560107 72%, #390308 100%);
+    margin: 3px 0px 3px 0px;
+    outline:none;
+}
+
+.rightMenu button:hover {
+    border: 3px groove #999999;
+    background: linear-gradient(0deg, #5c060e 0%, #710008 28%, #770505 50%, #710008 72%, #5c060e 100%);
+}
+
+.rightMenu button:active {
+    transform: translateY(2px);
+    border: 3px groove #575757;
+    background: linear-gradient(0deg, #300408 0%, #490307 28%, #520606 50%, #490307 72%, #300408 100%);
+}
+
+.rightMenuArea #rmenubuttoninput:checked ~ .rightMenu {
   transform: none;
 }
 
@@ -732,4 +758,11 @@ html {
     border-radius: 10px;
     box-shadow: inset 0 0 6px rgba(0,0,0,.3);
     background: linear-gradient(0deg, rgba(147,162,221,1) 0%, rgba(230,254,255,1) 100%);
+}
+
+.rightMenuCustomInput {
+    margin: 4px 5px 0px 0px;
+    width: 45px;
+    height: 20px;
+    text-align: center;
 }
