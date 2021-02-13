@@ -13,17 +13,22 @@
     <div id="app">
         <div>
             <button @click="debugSpawnAlly">debugspawn</button>
+            <button @click="removeLastAlly">debugdespawn</button>
+            <button @click="removeAllAllies">debugdespawnall</button>
             <button @click="addSpell">debugaddspell</button>
             <button @click="playerSetMinMana">mana 0</button>
             <button @click="playerSetMaxMana">mana 100</button>
             <button @click="player.addMana(-10)">Mana -10</button>
             <!--<input v-model="manaRegen" id="number" type="number" style="width: 35px;">-->
-            <input v-model="player.haste" type="number" style="width: 50px; color: #6d3fa8" @input="statsCalculation">
-            <input v-model="player.spellPower" type="number" style="width: 50px; color: #4289e6"
+            <input v-model="player.spellPower" type="number" style="width: 50px; color: #4289e6; font-weight: 600;"
                 @input="statsCalculation">
-            <input v-model="player.versatility" type="number" style="width: 50px; color: #26c033"
+            <input v-model="player.haste" type="number" style="width: 50px; color: #9b4eff; font-weight: 600;"
                 @input="statsCalculation">
-            <input v-model="player.criticalStrike" type="number" style="width: 50px; color: #ff640a"
+            <input v-model="player.versatility" type="number" style="width: 50px; color: #26c033; font-weight: 600;"
+                @input="statsCalculation">
+            <input v-model="player.criticalStrike" type="number" style="width: 50px; color: #ff640a; font-weight: 600;"
+                @input="statsCalculation">
+            <input v-model="player.mastery" type="number" style="width: 50px; color: #ff58cd; font-weight: 600;"
                 @input="statsCalculation">
             <div style="color: white; display: inline-block;">
                 {{ selectedEntity ? selectedEntity.id : 'none' }}
@@ -71,14 +76,24 @@
             </div>
 
             <div class="flexframe">
-                <div class="rightMenu">
-                    <div style="min-height: 8000px;"></div>
+                <div class="rightMenuArea">
+                    <input type="checkbox" />
+                    <div class="rightMenuButton">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                    <div class="rightMenu">
+                        <h2>Group composition</h2>
+                        <div style="min-height: 8000px;"></div>
+                    </div>
                 </div>
 
                 <div class="allyframecontainer">
                     <div v-for="(ally,index) in allies" :key="index"
                         :class="'allyhpbar' +(selected==index?' selected':'')" :data-label="formatHpLabel(ally)"
-                        @click="()=>selected=index"> <!-- @mouseover="()=>selected=index" -->
+                        @click="()=>selected=index">
+                        <!-- @mouseover="()=>selected=index" -->
                         <div class="statusEffectLittleFrame">
                             <div v-for="(effect, index) in ally.activeEffects" :key="index"
                                 class="statusEffectLittleFrameIcon"
@@ -107,9 +122,10 @@
                     <div class="playerHPbar" :data-label="Number((player.hp/player.maxHp*100).toFixed(1))+'%'">
                         <div class="statusEffectBigFrame">
                             <div v-if="player.maxSpecialPower > 0" class="playerSpecialPower">
-                                <div v-for="(specialPower, index) in player.maxSpecialPower-player.specialPower" :key="index"
-                                    class="emptyPaladinPower"></div>
-                                <div v-for="(specialPower, index) in player.specialPower" :key="index" class="fullPaladinPower">
+                                <div v-for="(specialPower, index) in player.maxSpecialPower-player.specialPower"
+                                    :key="index" class="emptyPaladinPower"></div>
+                                <div v-for="(specialPower, index) in player.specialPower" :key="index"
+                                    class="fullPaladinPower">
                                 </div>
                             </div>
                             <div v-for="(effect, index) in player.activeEffects" :key="index"
@@ -266,6 +282,7 @@
                     haste: 0,
                     versatility: 0,
                     criticalStrike: 0,
+                    mastery: 0,
                     damageReduction: 0,
                     incomingHeal: false,
                     activeEffects: [],
@@ -684,7 +701,7 @@
                         beingRenewed: false,
                         tooltip: "test",
                         icon: "ability_monk_soothingmists",
-                        applyEffect: function (game, state) {},
+                        applyEffect: function (game, state) { },
                     },
                 ],
             },
@@ -851,6 +868,14 @@
                             },
                         })
                     }
+                },
+
+                removeLastAlly() {
+                    this.allies.pop()
+                },
+
+                removeAllAllies() {
+                    this.allies = []
                 },
 
                 changeAllyHpByRole() {

@@ -619,18 +619,87 @@ html {
     border-radius: 4px;
 }
 
+.rightMenuArea {
+    display: flex;
+    position: fixed;
+    width: 320px;
+    height: auto;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: flex-end;
+    top: 0; left: auto; bottom: 0; right: 0;
+    z-index: 0;
+}
+
+.rightMenuArea input {
+    margin: 8px 8px 0px 0px;
+    position: fixed;
+    width: 35px;
+    height: 35px;
+    opacity: 0;
+    z-index: 5;
+    transition-duration: 400ms;
+}
+
+.rightMenuArea input:checked {
+    transition-duration: 400ms;
+    transform: scale(0.89) translateY(5px);
+}
+
+.rightMenuArea input:checked ~ .rightMenuButton {
+    transition-duration: 400ms;
+    transform: scale(0.89) translateY(5px);
+    box-shadow: none;
+}
+
+.rightMenuArea input:checked ~ .rightMenuButton {
+    background-color: #a51515;
+}
+
 .rightMenuButton {
-    position:fixed;
+    margin: 5px 5px 0px 0px;
+    display: flex;
+    width: 35px;
+    height: 35px;
+    background-color: #333;
+    border-radius: 6px;
+    transition-duration: 400ms;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0px 6px 12px #000000a6;
+}
+
+.rightMenuButton span {
+    background-color: #fff;
+    border-radius: 5px;
+    width: 24px;
+    height: 3px;
+    margin: 3px 0px 3px 0px;
+}
+
+.rightMenuArea input:checked ~ .rightMenuButton span {
+    transform: rotate(45deg) translate(-6.5px, -6px);
+    background: #fff;
+}
+
+.rightMenuArea input:checked ~ .rightMenuButton span:nth-last-child(2) {
+    transform: rotate(-45deg) translate(0, 0px);
+}
+
+
+.rightMenuArea input:checked ~ .rightMenuButton span:nth-last-child(3) {
+    opacity: 0;
 }
 
 .rightMenu {
+    padding: 8px 5px 8px 5px;
     display: flex;
-    position:fixed;
-    height: 500px;
-    max-height: 500px;
+    position: absolute;
+    top: 40px;
+    max-height: 48%;
     width: 320px;
-    right: 0;
-    top: 0;
+    max-width: 320px;
     margin-top: 6%;
     background-color: #00000086;
     border: 1px solid #fff;
@@ -641,6 +710,13 @@ html {
     overflow-x: hidden;
     overflow-y: auto;
     scroll-behavior: smooth;
+    color: #fff;  transform-origin: 0% 0%;
+    transform: translate(100%, 0);
+    transition: transform 0.5s cubic-bezier(0.77,0.2,0.05,1.0);
+}
+
+.rightMenuArea input:checked ~ .rightMenu {
+  transform: none;
 }
 
 *::-webkit-scrollbar-track {
