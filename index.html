@@ -57,7 +57,7 @@
                         {{ holdClickHover }}
                     </div>
                     <div style="color: #5656ff; display: inline-block; margin-left: 10px;">
-                        {{ Number((player.mana).toFixed(2)) }}
+                        {{ (player.mana).toFixed(2) }}
                     </div>
                     <div style="color: #56ff5e; display: inline-block; margin-left: 10px;">
                         {{ Number((player.hp).toFixed(2)) }}
@@ -374,7 +374,7 @@
                 hoveredSpell: null,
                 holdClickHover: false,
                 spellInQueue: false,
-                manaRegen: 0.8, // 100 * 0.008
+                manaRegen: 0.8/60, // (100 * 0.008)
                 globalCooldown: 1500,
                 remainGCD: null,
                 underGCD: false,
@@ -519,6 +519,33 @@
                                 applyStatus2: null,
                                 use: function (game, state) {
                                     game.findEntityById(state.selectedEntityId).addHpPercent(100)
+                                },
+                            },
+                            {
+                                id: 8,
+                                name: "Lifebloom",
+                                mana: 1.5,
+                                manapersecond: 0,
+                                baseEffectAmount: 1.95,
+                                effectAmount: 1.95,
+                                tooltip: "Heals the target for #spellpower over 15 sec. When Lifebloom expires or is dispelled, the target is instantly healed for (115% of Spell power). May be active on one target at a time.",
+                                icon: "inv_misc_herb_felblossom",
+                                baseIncantTime: 0,
+                                incantTime: 0,
+                                baseChannelTime: 0,
+                                channelTime: 0,
+                                channelTicks: 0,
+                                channelEffectAmount: 0,
+                                channeled: false,
+                                cooldown: 0,
+                                currentCooldown: 0,
+                                affectGCD: true,
+                                deadTargetEffect: 0,
+                                key: 49,
+                                reactToStatus: null,
+                                applyStatus: 5,
+                                applyStatus2: null,
+                                use: function (game, state) {
                                 },
                             },
                         ],
@@ -715,6 +742,7 @@
                         name: "Power Word: Shield", // its name
                         buff: true, // false if it's a debuff, used to change the border color
                         type: "magic", // curse, disease, magic, poison --> for dispelling
+                        limitedToOneTarget: false, // if the effect is limited to one target
                         fromChannelingSpell: false, // if it's a buff given by a channeled spell
                         baseEffect: 1.65,
                         effect: 1.65, // cast one time in a buff where ticks=0, else it is cast at every ticks -- applyEffect
@@ -732,6 +760,7 @@
                         durationAffectedByStats: false,
                         ticks: null, // number of times the effect is triggered. Null if the buff don't repeat the effect
                         beingRenewed: false, // Always false, used to renewed the effect in the function
+                        break: false, // Always false, used to break the loop
                         tooltip: "test",
                         icon: "spell_holy_powerwordshield",
                         applyEffect: function (game, state) {
@@ -746,6 +775,7 @@
                         name: "Weakened Soul",
                         buff: false,
                         type: null,
+                        limitedToOneTarget: false,
                         fromChannelingSpell: false,
                         baseEffect: null,
                         effect: null,
@@ -763,6 +793,7 @@
                         durationAffectedByStats: false,
                         ticks: null,
                         beingRenewed: false,
+                        break: false,
                         tooltip: "test",
                         icon: "spell_holy_ashestoashes",
                     },
@@ -771,6 +802,7 @@
                         name: "Renew",
                         buff: true,
                         type: "magic",
+                        limitedToOneTarget: false,
                         fromChannelingSpell: false,
                         baseEffect: 0.32,
                         effect: 0.32,
@@ -788,6 +820,7 @@
                         durationAffectedByStats: false,
                         ticks: 5,
                         beingRenewed: false,
+                        break: false,
                         tooltip: "test",
                         icon: "spell_holy_renew",
                         applyEffect: function (game, state) {
@@ -799,6 +832,7 @@
                         name: "Soothing Mist",
                         buff: true,
                         type: null,
+                        limitedToOneTarget: false,
                         fromChannelingSpell: true,
                         baseEffect: 0.55,
                         effect: 0.55,
@@ -816,9 +850,43 @@
                         durationAffectedByStats: true,
                         ticks: null,
                         beingRenewed: false,
+                        break: false,
                         tooltip: "test",
                         icon: "ability_monk_soothingmists",
                         applyEffect: function (game, state) { },
+                    },
+                    {
+                        id: 5,
+                        name: "Lifebloom",
+                        buff: true,
+                        type: null,
+                        limitedToOneTarget: true,
+                        fromChannelingSpell: false,
+                        baseEffect: 0.13,
+                        effect: 0.13,
+                        effectAffectedByStats: true,
+                        baseEffect2: null,
+                        effect2: null,
+                        effect2AffectedByStats: false,
+                        haveEndEffect: true,
+                        baseEndEffectValue: 1.15,
+                        endEffectValue: 1.15,
+                        endEffectAffectedByStats: true,
+                        baseDuration: 15000,
+                        maxDuration: 15000,
+                        duration: 15000,
+                        durationAffectedByStats: false,
+                        ticks: 15,
+                        beingRenewed: false,
+                        break: false,
+                        tooltip: "test",
+                        icon: "inv_misc_herb_felblossom",
+                        applyEffect: function (game, state) {
+                            game.findEntityById(state.selectedEntityId).addHp(this.effect)
+                        },
+                        applyEndEffect: function (game, state) {
+                            game.findEntityById(state.selectedEntityId).addHp(this.endEffectValue)
+                        }
                     },
                 ],
             },
@@ -1406,12 +1474,23 @@
                 },
 
                 applyStatusEffect(target, effect) {
-                    let previous = target.activeEffects.filter((x) => x.id == effect.id)[0]
+                    let previous = target.activeEffects.filter((x) => x.id == effect.id)[0] // previous = if the target already have the same effect
 
-                    if (previous !== undefined) {
+                    if (previous != undefined) {
                         previous.beingRenewed = true
                     } else {
 
+                        if (effect.limitedToOneTarget) {
+                            if (this.player.activeEffects.filter((x) => x.id == effect.id)[0]) {
+                                this.player.activeEffects.filter((x) => x.id == effect.id)[0].break = true
+                            } else {
+                                for (const ally of this.allies) {
+                                    if (ally.activeEffects.filter((x) => x.id == effect.id)[0]) {
+                                        ally.activeEffects.filter((x) => x.id == effect.id)[0].break = true
+                                    }
+                                }
+                            }
+                        }
 
                         effect = { ...effect }
 
@@ -1426,6 +1505,11 @@
                                 effect.applyEffect2(this, { selectedEntityId })
                             }
                             let elune = () => {
+                                if (effect.break) {
+                                    target.activeEffects.removeIf((x) => x.id == effect.id)
+                                    target.activeShields.removeIf((x) => x.id == effect.id)
+                                    return
+                                }
                                 if (effect.beingRenewed) {
                                     target.activeShields.removeIf((x) => x.id == effect.id)
                                     if (effect.baseEffect2 != null) {
@@ -1454,7 +1538,7 @@
                                     }
 
                                     target.activeEffects.removeIf((x) => x.id == effect.id)
-                                    target.activeEffects.removeIf((x) => x.id == effect.id)
+                                    target.activeShields.removeIf((x) => x.id == effect.id)
 
                                     return
                                 }
@@ -1469,6 +1553,11 @@
                                 }
                             }
                             let elune = () => {
+                                if (effect.break) {
+                                    target.activeEffects.removeIf((x) => x.id == effect.id)
+                                    target.activeShields.removeIf((x) => x.id == effect.id)
+                                    return
+                                }
                                 if (effect.beingRenewed) {
                                     target.activeShields.removeIf((x) => x.id == effect.id)
                                     if (effect.baseEffect != null) {
@@ -1553,12 +1642,12 @@
                         for (const ally of this.allies) {
                             ally.addHp(-ally.maxHp / 100)
                         }
-                        this.player.addMana(this.manaRegen)
                     }
                     for (const ally of this.allies) {
                         this.getEntityTotalShield(ally)
                     }
                     this.getEntityTotalShield(this.player)
+                    this.player.addMana(this.manaRegen)
                     step++
                 }, 1000 / 60)
             }
