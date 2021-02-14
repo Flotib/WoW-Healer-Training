@@ -11,6 +11,10 @@
 
 <body>
     <div id="app">
+        <div v-if="toggleBackgroundImage" class="backgroundImage"
+            :style="'background-image: url'+backgroundImage+'; filter: blur('+backgroundBlurValue/10+'px);'">
+            <div class="backgroundOverlap"></div>
+        </div>
         <div>
             <button @click="debugSpawnAlly">debugspawn</button>
             <button @click="removeLastAlly">debugdespawn</button>
@@ -84,29 +88,90 @@
                         <span></span>
                     </div>
                     <div class="rightMenu">
-                        <h2 style="border: 1px solid #fff; padding: 5px 15px 5px 15px; text-shadow: #ff0000 0px 0 16px; font-weight: 400;">Group composition</h2>
+                        <h2
+                            style="border: 1px solid #fff; padding: 5px 15px 5px 15px; text-shadow: #ff0000 0px 0 16px; font-weight: 400; margin-bottom: 10px;">
+                            Group composition</h2>
                         <div style="margin-top: 10px;">
-                            <h3 style="font-weight: 400; color: #FF7D01">Raid :</h3> <!--Minus 1 healer because... Player is one of them-->
+                            <h3 style="font-weight: 400; color: #FF7D01">Raid :</h3>
+                            <!--Minus 1 healer because... Player is one of them-->
                             <!--<div style="box-shadow: #ff7c01 0px 0 8px; width: 250px; background-color: #ff7c01;">-->
-                            <button @click="removeAllAllies(); addAlly(2, 'tank'); addAlly(1, 'healer'); addAlly(6, 'dps');">2<img src="img/roles/tank.png">2<img src="img/roles/healer.png">6<img src="img/roles/dps.png"></button>
-                            <button @click="removeAllAllies(); addAlly(2, 'tank'); addAlly(2, 'healer'); addAlly(9, 'dps');">2<img src="img/roles/tank.png">3<img src="img/roles/healer.png">9<img src="img/roles/dps.png"></button>
-                            <button @click="removeAllAllies(); addAlly(2, 'tank'); addAlly(3, 'healer'); addAlly(14, 'dps');">2<img src="img/roles/tank.png">4<img src="img/roles/healer.png">14<img src="img/roles/dps.png"></button>
-                        <!--</div>-->
+                            <button
+                                @click="removeAllAllies(); addAlly(2, 'tank'); addAlly(1, 'healer'); addAlly(6, 'dps');">2<img
+                                    src="img/roles/tank.png">2<img src="img/roles/healer.png">6<img
+                                    src="img/roles/dps.png"></button>
+                            <button
+                                @click="removeAllAllies(); addAlly(2, 'tank'); addAlly(2, 'healer'); addAlly(9, 'dps');">2<img
+                                    src="img/roles/tank.png">3<img src="img/roles/healer.png">9<img
+                                    src="img/roles/dps.png"></button>
+                            <button
+                                @click="removeAllAllies(); addAlly(2, 'tank'); addAlly(3, 'healer'); addAlly(14, 'dps');">2<img
+                                    src="img/roles/tank.png">4<img src="img/roles/healer.png">14<img
+                                    src="img/roles/dps.png"></button>
+                            <!--</div>-->
                         </div>
                         <div style="margin-top: 15px;">
                             <h3 style="font-weight: 400; color: #AAABFE">Party :</h3>
-                            <button @click="removeAllAllies(); addAlly(1, 'tank'); addAlly(3, 'dps');">1<img src="img/roles/tank.png">1<img src="img/roles/healer.png">3<img src="img/roles/dps.png"></button>
+                            <button @click="removeAllAllies(); addAlly(1, 'tank'); addAlly(3, 'dps');">1<img
+                                    src="img/roles/tank.png">1<img src="img/roles/healer.png">3<img
+                                    src="img/roles/dps.png"></button>
                         </div>
                         <div style="margin: 15px 0px 25px 0px;">
                             <h3 style="font-weight: 400; color: #E6CC80">Custom :</h3>
                             <div style="display: inline-flex;">
-                                <img src="img/roles/tank.png" style="transform: scale(0.8);"><input type="number" v-model="allyTank" class="rightMenuCustomInput">
-                                <img src="img/roles/healer.png" style="transform: scale(0.8);"><input type="number" v-model="allyHealer" class="rightMenuCustomInput">
-                                <img src="img/roles/dps.png" style="transform: scale(0.8);"><input type="number" v-model="allyDps" class="rightMenuCustomInput">
+                                <img src="img/roles/tank.png" style="transform: scale(0.8);"><input type="number"
+                                    v-model="allyTank" class="rightMenuCustomInput">
+                                <img src="img/roles/healer.png" style="transform: scale(0.8);"><input type="number"
+                                    v-model="allyHealer" class="rightMenuCustomInput">
+                                <img src="img/roles/dps.png" style="transform: scale(0.8);"><input type="number"
+                                    v-model="allyDps" class="rightMenuCustomInput">
                             </div>
-                            <button @click="removeAllAllies(); addAlly(allyTank, 'tank'); addAlly(allyHealer, 'healer'); addAlly(allyDps, 'dps');">Add</button>
+                            <button
+                                @click="removeAllAllies(); addAlly(allyTank, 'tank'); addAlly(allyHealer, 'healer'); addAlly(allyDps, 'dps');">Apply</button>
                         </div>
-                        <hr style="width: 75%;">
+                        <hr style="width: 75%; margin-bottom: 25px;">
+                        <h2
+                            style="border: 1px solid #fff; padding: 5px 15px 5px 15px; text-shadow: #ff0000 0px 0 16px; font-weight: 400; margin-bottom: 10px;">
+                            Background settings</h2>
+                        <div class="carousel">
+                            <ul class="slides">
+                                <input type="radio" name="radio-buttons" id="img-1" checked />
+                                <li class="slide-container">
+                                    <div class="slide-image">
+                                        <img src="img/bg/northshire.jpg">
+                                    </div>
+                                </li>
+                                <input type="radio" name="radio-buttons" id="img-2" />
+                                <li class="slide-container">
+                                    <div class="slide-image">
+                                        <img src="img/bg/onyxia.jpg">
+                                    </div>
+                                </li>
+                                <input type="radio" name="radio-buttons" id="img-3" />
+                                <li class="slide-container">
+                                    <div class="slide-image">
+                                        <img src="img/bg/ragnaros.jpg">
+                                    </div>
+                                </li>
+                                <div class="carousel-dots">
+                                    <label for="img-1" class="carousel-dot" id="img-dot-1"
+                                        @click="backgroundImage = '(img/bg/northshire.jpg)'"
+                                        style="background-image: url(img/bg/northshire.jpg);"></label>
+                                    <label for="img-2" class="carousel-dot" id="img-dot-2"
+                                        @click="backgroundImage = '(img/bg/onyxia.jpg);'"
+                                        style="background-image: url(img/bg/onyxia.jpg);"></label>
+                                    <label for="img-3" class="carousel-dot" id="img-dot-3"
+                                        @click="backgroundImage = '(img/bg/ragnaros.jpg)'"
+                                        style="background-image: url(img/bg/ragnaros.jpg);"></label>
+                                </div>
+                            </ul>
+                        </div>
+                        <button style="margin-top: 10px;"
+                            @click="if(!toggleBackgroundImage){toggleBackgroundImage=true}else{toggleBackgroundImage=false}; if(backgroundImage==null){backgroundImage='(img/bg/northshire.jpg)'}">Background
+                            image on/off</button>
+                            <div style="margin-top: 10px;">
+                            <h3 style="font-weight: 400; font-size: 16px;">Blur : {{ backgroundBlurValue }}%</h3>
+                            <input type="range" class="customSliderMenu" v-model="backgroundBlurValue">
+                        </div>
                     </div>
                 </div>
 
@@ -261,6 +326,11 @@
             el: '#app',
             data: {
                 keyPressed: false,
+                toggleBackgroundImage: false,
+                backgroundImage: null,
+                backgroundBlurValue: 20,
+                defaultBackgroundColor: 242426,
+                backgroundColor: 242426,
                 globalIncrement: 0,
                 selected: -1,
                 currentCast: -1,
