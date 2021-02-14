@@ -10,9 +10,9 @@ img {
     pointer-events: none;
 }
 
-html {
+/* html {
     background-color: #242426;
-}
+} Now useless, only here because we never know what could happen next...*/
 
 .backgroundImage {
     z-index: -100;

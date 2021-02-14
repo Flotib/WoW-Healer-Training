@@ -11,9 +11,10 @@
 
 <body>
     <div id="app">
+        <div class="backgroundImage" :style="'background-color: '+backgroundColor+';'"></div>
         <div v-if="toggleBackgroundImage" class="backgroundImage"
             :style="'background-image: url'+backgroundImage+'; filter: blur('+backgroundBlurValue/10+'px);'">
-            <div class="backgroundOverlap"></div>
+            <div v-if="toggleBackgroundImageVignette" class="backgroundOverlap"></div>
         </div>
         <div>
             <button @click="debugSpawnAlly">debugspawn</button>
@@ -168,9 +169,18 @@
                         <button style="margin-top: 10px;"
                             @click="if(!toggleBackgroundImage){toggleBackgroundImage=true}else{toggleBackgroundImage=false}; if(backgroundImage==null){backgroundImage='(img/bg/northshire.jpg)'}">Background
                             image on/off</button>
-                            <div style="margin-top: 10px;">
+                        <button style="margin-top: 10px;"
+                            @click="if(!toggleBackgroundImageVignette){toggleBackgroundImageVignette=true}else{toggleBackgroundImageVignette=false}">Image
+                            vignette on/off</button>
+                        <div style="margin-top: 10px;">
                             <h3 style="font-weight: 400; font-size: 16px;">Blur : {{ backgroundBlurValue }}%</h3>
                             <input type="range" class="customSliderMenu" v-model="backgroundBlurValue">
+                        </div>
+                        <div style="margin-top: 10px; display: inline-flex; align-items: center;">
+                            <h3 style="margin-right: 15px; font-weight: 400; font-size: 16px;">Background color :</h3>
+                            <input type="color" v-model="backgroundColor">
+                            <div v-if="backgroundColor == defaultBackgroundColor" style="width: 35px;"></div>
+                            <button v-if="backgroundColor != defaultBackgroundColor" @click="backgroundColor = defaultBackgroundColor" style="width: 35px; height: 24px; padding: 0px; margin: 0px;">X</button>
                         </div>
                     </div>
                 </div>
@@ -327,10 +337,11 @@
             data: {
                 keyPressed: false,
                 toggleBackgroundImage: false,
+                toggleBackgroundImageVignette: true,
                 backgroundImage: null,
                 backgroundBlurValue: 20,
-                defaultBackgroundColor: 242426,
-                backgroundColor: 242426,
+                defaultBackgroundColor: '#'+242426,
+                backgroundColor: '#'+242426,
                 globalIncrement: 0,
                 selected: -1,
                 currentCast: -1,
