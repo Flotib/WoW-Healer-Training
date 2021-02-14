@@ -741,6 +741,17 @@ html {
     background: linear-gradient(0deg, #300408 0%, #490307 28%, #520606 50%, #490307 72%, #300408 100%);
 }
 
+.rightMenu button img {
+    transform: scale(2.4); 
+    display: inline-block; 
+    height: 10px; 
+    margin: 0px 14px 2px 8px;
+}
+
+.rightMenu button img:nth-last-child(1) {
+    margin: 0px 0px 2px 8px;
+}
+
 .rightMenuArea #rmenubuttoninput:checked ~ .rightMenu {
   transform: none;
 }
