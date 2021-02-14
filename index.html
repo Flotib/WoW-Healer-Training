@@ -98,22 +98,22 @@
                                 <!--Minus 1 healer because... Player is one of them-->
                                 <!--<div style="box-shadow: #ff7c01 0px 0 8px; width: 250px; background-color: #ff7c01;">-->
                                 <button
-                                    @click="removeAllAllies(); addAlly(2, 'tank'); addAlly(1, 'healer'); addAlly(6, 'dps');">2<img
+                                    @click="removeAllAllies(); addAlly(2, 'tank'); addAlly(1, 'healer'); addAlly(6, 'dps'); changeAllyHpByRole();">2<img
                                         src="img/roles/tank.png">2<img src="img/roles/healer.png">6<img
                                         src="img/roles/dps.png"></button>
                                 <button
-                                    @click="removeAllAllies(); addAlly(2, 'tank'); addAlly(2, 'healer'); addAlly(9, 'dps');">2<img
+                                    @click="removeAllAllies(); addAlly(2, 'tank'); addAlly(2, 'healer'); addAlly(9, 'dps'); changeAllyHpByRole();">2<img
                                         src="img/roles/tank.png">3<img src="img/roles/healer.png">9<img
                                         src="img/roles/dps.png"></button>
                                 <button
-                                    @click="removeAllAllies(); addAlly(2, 'tank'); addAlly(3, 'healer'); addAlly(14, 'dps');">2<img
+                                    @click="removeAllAllies(); addAlly(2, 'tank'); addAlly(3, 'healer'); addAlly(14, 'dps'); changeAllyHpByRole();">2<img
                                         src="img/roles/tank.png">4<img src="img/roles/healer.png">14<img
                                         src="img/roles/dps.png"></button>
                                 <!--</div>-->
                             </div>
                             <div style="margin-top: 15px;">
                                 <h3 style="font-weight: 400; color: #AAABFE">Party :</h3>
-                                <button @click="removeAllAllies(); addAlly(1, 'tank'); addAlly(3, 'dps');">1<img
+                                <button @click="removeAllAllies(); addAlly(1, 'tank'); addAlly(3, 'dps'); changeAllyHpByRole();">1<img
                                         src="img/roles/tank.png">1<img src="img/roles/healer.png">3<img
                                         src="img/roles/dps.png"></button>
                             </div>
@@ -128,7 +128,7 @@
                                         v-model="allyDps" class="rightMenuCustomInput">
                                 </div>
                                 <button
-                                    @click="removeAllAllies(); addAlly(allyTank, 'tank'); addAlly(allyHealer, 'healer'); addAlly(allyDps, 'dps');">Apply</button>
+                                    @click="removeAllAllies(); addAlly(allyTank, 'tank'); addAlly(allyHealer, 'healer'); addAlly(allyDps, 'dps'); changeAllyHpByRole();">Apply</button>
                             </div>
                             <hr style="width: 75%; margin-bottom: 25px;">
                             <h2
