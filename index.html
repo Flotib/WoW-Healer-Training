@@ -222,9 +222,8 @@
                         <div class="playerHPbar" :data-label="Number((player.hp/player.maxHp*100).toFixed(1))+'%'">
                             <div class="statusEffectBigFrame">
                                 <div v-if="player.maxSpecialPower > 0" class="playerSpecialPower">
-                                    <div v-for="(specialPower, index) in player.maxSpecialPower-player.specialPower"
-                                        :key="index" class="emptyPaladinPower"></div>
-                                    <div v-for="(specialPower, index) in player.specialPower" :key="index"
+                                    <div v-for="specialPower in player.maxSpecialPower-player.specialPower" class="emptyPaladinPower"></div>
+                                    <div v-for="specialPower in player.specialPower"
                                         class="fullPaladinPower">
                                     </div>
                                 </div>
@@ -482,8 +481,10 @@
                         }
                     },
                     generateSP: function (value) {
-                        if (this.maxSpecialPower > this.specialPower) {
-                            this.specialPower += 1
+                        if (this.maxSpecialPower < this.specialPower + value) {
+                            this.specialPower = this.maxSpecialPower
+                        } else {
+                            this.specialPower += value
                         }
                     },
                 },
@@ -618,6 +619,38 @@
                                     game.player.generateSP(1) // generate one point of special power (SP)
                                 },
                             },
+                            {
+                                id: 10,
+                                name: "Light of Dawn",
+                                mana: 0, // Idk if it's the real value, I calculated it myself on a trial character
+                                manapersecond: 0,
+                                useSP: true, // if the spell use SP as cost
+                                spCost: 3, // number of SP used by the spell
+                                baseEffectAmount: 1.05,
+                                effectAmount: 1.05,
+                                tooltip: "Unleashes a wave of holy energy, healing up to 5 injured allies within a 15 yd frontal cone for #spellpower.",
+                                icon: "spell_paladin_lightofdawn",
+                                baseIncantTime: 0,
+                                incantTime: 0,
+                                baseChannelTime: 0,
+                                channelTime: 0,
+                                channelTicks: 0,
+                                channelEffectAmount: 0,
+                                channeled: false,
+                                cooldown: 0,
+                                currentCooldown: 0,
+                                affectGCD: true,
+                                deadTargetEffect: 0,
+                                multiTarget: 5,
+                                mostInjured: true, // target the most injured ally.ies
+                                key: 50,
+                                reactToStatus: null,
+                                applyStatus: null,
+                                applyStatus2: null,
+                                use: function (game, state) {
+                                    game.findEntityById(state.selectedEntityId).addHp(this.effectAmount)
+                                },
+                            },
                         ],
                     },
                     Priest: {
@@ -726,6 +759,40 @@
                                 currentCooldown: 0,
                                 affectGCD: true,
                                 deadTargetEffect: 0,
+                                key: 52,
+                                reactToStatus: null,
+                                applyStatus: 3,
+                                applyStatus2: null,
+                                use: function (game, state) {
+                                },
+                            },
+                        ],
+                    },
+                    Shaman: {
+                        color: '#0070DD',
+                        spells: [
+                            {
+                                id: 9,
+                                name: "Chain Heal",
+                                mana: 6,
+                                manapersecond: 0,
+                                baseEffectAmount: 1.6,
+                                effectAmount: 1.6,
+                                tooltip: "Fill the target with faith in the light, healing for #spellpower over 15 sec.",
+                                icon: "spell_holy_renew",
+                                baseIncantTime: 0,
+                                incantTime: 0,
+                                baseChannelTime: 0,
+                                channelTime: 0,
+                                channelTicks: 0,
+                                channelEffectAmount: 0,
+                                channeled: false,
+                                cooldown: 0,
+                                currentCooldown: 0,
+                                affectGCD: true,
+                                deadTargetEffect: 0,
+                                multiTarget: 3, // number of additional targets
+                                mostInjured: true, // target the most injured ally.ies
                                 key: 52,
                                 reactToStatus: null,
                                 applyStatus: 3,
@@ -1234,6 +1301,7 @@
                     }
                     if (this.classes[clazz].specialPower) {
                         this.player.maxSpecialPower = 5 // only paladin can use special power to heal, so I set it to 5
+                        this.player.specialPower = 0
                     } else {
                         this.player.maxSpecialPower = 0
                         this.player.specialPower = 0
@@ -1574,7 +1642,7 @@
                                         effect.duration = 0
                                     }
                                 }
-                                if (target.hp <= 0) {
+                                if (target.hp <= 0) { // add the applyEndEffect if it creates problems --> if the effect add damage reduction
                                     effect.duration = 0
                                     target.activeEffects.removeIf((x) => x.id == effect.id)
                                     return
