@@ -21,6 +21,8 @@
                 <button @click="debugSpawnAlly">debugspawn</button>
                 <button @click="removeLastAlly">debugdespawn</button>
                 <button @click="removeAllAllies">debugdespawnall</button>
+                <button @click="killAllAllies">kill all</button>
+                <button @click="reviveAllAllies">revive all</button>
                 <button @click="addSpell">debugaddspell</button>
                 <button @click="playerSetMinMana">mana 0</button>
                 <button @click="playerSetMaxMana">mana 100</button>
@@ -79,6 +81,8 @@
                         :style="'margin-left: 10px; color:'+classes.Druid.color+'; background-color: black;'">Druid</button>
                     <button @click="selectClass('Paladin')"
                         :style="'margin-left: 10px; color:'+classes.Paladin.color+'; background-color: black;'">Paladin</button>
+                    <button @click="selectClass('Shaman')"
+                        :style="'margin-left: 10px; color:'+classes.Shaman.color+'; background-color: black;'">Shaman</button>
                 </div>
 
                 <div class="flexframe">
@@ -641,8 +645,9 @@
                                 currentCooldown: 0,
                                 affectGCD: true,
                                 deadTargetEffect: 0,
-                                multiTarget: 5,
-                                mostInjured: true, // target the most injured ally.ies
+                                multiTarget: 4,
+                                mostInjured: false, // target the most injured ally.ies
+                                effectAmountChange: false,
                                 key: 50,
                                 reactToStatus: null,
                                 applyStatus: null,
@@ -776,12 +781,12 @@
                                 name: "Chain Heal",
                                 mana: 6,
                                 manapersecond: 0,
-                                baseEffectAmount: 1.6,
-                                effectAmount: 1.6,
-                                tooltip: "Fill the target with faith in the light, healing for #spellpower over 15 sec.",
-                                icon: "spell_holy_renew",
-                                baseIncantTime: 0,
-                                incantTime: 0,
+                                baseEffectAmount: 2.1,
+                                effectAmount: 2.1,
+                                tooltip: "Heals the friendly target for #spellpower, then jumps to heal the 2 most injured nearby allies. Healing is reduced by 30% with each jump.",
+                                icon: "spell_nature_healingwavegreater",
+                                baseIncantTime: 2500,
+                                incantTime: 2500,
                                 baseChannelTime: 0,
                                 channelTime: 0,
                                 channelTicks: 0,
@@ -793,11 +798,22 @@
                                 deadTargetEffect: 0,
                                 multiTarget: 3, // number of additional targets
                                 mostInjured: true, // target the most injured ally.ies
-                                key: 52,
+                                effectAmountChange: true,
+                                key: 49,
                                 reactToStatus: null,
-                                applyStatus: 3,
+                                applyStatus: null,
                                 applyStatus2: null,
-                                use: function (game, state) {
+                                use: function (game, state) { // one use per ally
+                                    game.findEntityById(state.selectedEntityId).addHp(this.effectAmount)
+                                },
+                                use1: function (game, state) { 
+                                    game.findEntityById(state.selectedEntityId).addHp(this.effectAmount*Math.pow(0.7, 1))
+                                },
+                                use2: function (game, state) {
+                                    game.findEntityById(state.selectedEntityId).addHp(this.effectAmount*Math.pow(0.7, 2))
+                                },
+                                use3: function (game, state) {
+                                    game.findEntityById(state.selectedEntityId).addHp(this.effectAmount*Math.pow(0.7, 3))
                                 },
                             },
                         ],
@@ -1244,11 +1260,58 @@
                     this.player.mana = 0
                 },
 
+                killAllAllies(){
+                    for (const ally of this.allies) { ally.addHpPercent(-100) }
+                },
+
+                reviveAllAllies(){
+                    for (const ally of this.allies) { ally.addHpPercent(100) }
+                },
+
                 channeledSpellBreakBuff(target, spell) {
                     target.activeEffects.removeIf((x) => x.id == spell.applyStatus)
                     target.activeShields.removeIf((x) => x.id == spell.applyStatus)
                     target.activeEffects.removeIf((x) => x.id == spell.applyStatus2)
                     target.activeShields.removeIf((x) => x.id == spell.applyStatus2)
+                },
+
+                targetMultipleAllies(spell, initialTargetId) {
+                    let allies = [...this.allies, this.player]
+                    allies.removeIf((x) => x.id == initialTargetId)
+                    allies.removeIf((x) => x.hp <= 0)
+
+                    let toHeal = null
+
+                    if (allies.length <= spell.multiTarget) {
+                        toHeal = allies
+                    } else {
+                        if (spell.mostInjured) {
+                            allies.sort((a, b) => (a.hp/a.maxHp) - (b.hp/b.maxHp))
+                            toHeal = allies.slice(0, spell.multiTarget)
+                        } else {
+                            toHeal = []
+                            for (let i = 0; i < spell.multiTarget; i++) {
+                                toHeal.push(allies.splice(rand(0, allies.length - 1), 1)[0])
+                            }
+                        }
+                    }
+                    
+                    if (spell.effectAmountChange) {
+                        for (let i = 0; i < spell.multiTarget; i++) {
+                            let ally = toHeal.shift()
+                            if (i==0) {
+                                spell.use1(this, { selectedEntityId: ally.id })
+                            }
+                            if (i==1) {
+                                spell.use2(this, { selectedEntityId: ally.id })
+                            }
+                            if (i==2) {
+                                spell.use3(this, { selectedEntityId: ally.id })
+                            }
+                        }
+                    } else {
+                        toHeal.forEach((ally) => spell.use(this, { selectedEntityId: ally.id }))
+                    }
                 },
 
                 statsCalculation() { // toDo : do the same for effects
@@ -1419,6 +1482,9 @@
                                         this.currentCastAnim = setTimeout(whle, 1000 / 60);
                                     } else {
                                         spell.use(this, { selectedEntityId })
+                                        if (spell.multiTarget != null && spell.multiTarget > 0) {
+                                            this.targetMultipleAllies(spell, this.findEntityById(selectedEntityId).id)
+                                        }
                                         if (spell.applyStatus != null) {
                                             this.applyStatusEffect(this.findEntityById(selectedEntityId), this.findStatusEffectById(spell.applyStatus))
 
@@ -1470,6 +1536,7 @@
                                 if (spell.affectGCD) {
                                     this.globalCooldownFunction()
                                 }
+                                this.player.mana -= spell.mana
                                 this.currentCast = 1
                                 this.incantChannelTime = spell.channelTime;
                                 this.channelTicksInterval = spell.channelTime / spell.channelTicks // channeled ticks interval's now here
