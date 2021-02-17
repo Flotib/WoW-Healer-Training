@@ -10,6 +10,11 @@ img {
     pointer-events: none;
 }
 
+@font-face {
+    font-family: "Morpheus";
+    src: url("../fonts/morpheus.ttf") format("ttf");
+}
+
 /* html {
     background-color: #242426;
 } Now useless, only here because we never know what could happen next...*/
@@ -929,4 +934,113 @@ input:checked + .slide-container .nav label { display: block; }
     background-repeat: no-repeat;
     background-position: center;
     background-image: url('../img/sliderbarbutton.png');
+}
+
+.classSelectionScreen {
+    display: flex;
+    position: absolute;
+    flex-wrap: wrap;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    min-width: 100%;
+    min-height: 100%;
+    background-color: #242426;
+}
+
+.classSelectionScreen .buttonValidateGrey {
+    position: fixed;
+    bottom: 5%;
+    padding-top: 2px;
+    width: 240px;
+    height: 40px;
+    border: 3px groove #696969;
+    border-radius: 4px;
+    font-size: 24px;
+    color: #fff;
+    font-weight: 500;
+    background: linear-gradient(0deg, #303030 0%, #4b4b4b 50%, #303030 100%);
+    margin: 3px 0px 3px 0px;
+    outline:none;
+}
+
+.classSelectionScreen .buttonValidate {
+    position: fixed;
+    bottom: 5%;
+    padding-top: 2px;
+    width: 240px;
+    height: 40px;
+    border: 3px groove #696969;
+    border-radius: 4px;
+    font-size: 24px;
+    color: #fff;
+    font-weight: 500;
+    background: linear-gradient(0deg, #390308 0%, #560107 28%, #640404 50%, #560107 72%, #390308 100%);
+    margin: 3px 0px 3px 0px;
+    outline:none;
+}
+
+.classSelectionScreen .buttonValidate:hover {
+    border: 3px groove #999999;
+    background: linear-gradient(0deg, #5c060e 0%, #710008 28%, #770505 50%, #710008 72%, #5c060e 100%);
+}
+
+.classSelectionScreen .buttonValidate:active {
+    transform: translateY(2px);
+    border: 3px groove #575757;
+    background: linear-gradient(0deg, #300408 0%, #490307 28%, #520606 50%, #490307 72%, #300408 100%);
+}
+
+.classContainer {
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: column;
+    align-items: center;
+    justify-content: start;
+    background-color: #5a5a5a;
+    margin: 15px 15px 15px 15px;
+    height: 500px;
+    width: 300px;
+    max-height: 100%;
+    max-width: 300px;
+    min-height: 0;
+    min-width: 0;
+    user-select: none;
+}
+
+.hoverScaleClassMenu {
+    transform: scale(1);
+    transition-duration: 300ms;
+}
+
+.hoverScaleClassMenu:hover {
+    transition-duration: 800ms;
+    transform: scale(1.1);
+}
+
+.classContainerSelected {
+    outline: 1px solid transparent;
+    box-shadow: 0 0 15px 5px #ff0000;
+    outline: 1px solid transparent; /* Fix the chrome anti-aliasing issue --> https://bit.ly/3s3l4XW*/
+}
+
+.classContainer:hover {
+    filter: brightness(150%)
+}
+
+.classIconSelection {
+    display: inline-block;
+    width: 95px;
+    height: auto;
+    border-radius: 50%;
+    border: 5px solid transparent;
+    background-clip: border-box;
+    background-image: url('../img/classes/border.png');
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: 112%;
+}
+
+.classContainer:hover .classIconSelection {
+    box-shadow: 0 0 35px 0px #fff891;
 }

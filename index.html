@@ -11,7 +11,15 @@
 
 <body>
     <div id="app">
-        <div>
+        <div v-if="!choseClass" class="classSelectionScreen">
+            <div  v-for="clazz in classes" class="hoverScaleClassMenu">
+            <div :class="'classContainer' +(selectedClazz==clazz.name?' classContainerSelected':'')" @click="selectedClazz = clazz.name">
+                <img :src="'img/classes/'+clazz.name+'.png'" class="classIconSelection"/>
+            </div>
+        </div>
+            <button :class="{ buttonValidateGrey:!selectedClazz, buttonValidate:selectedClazz }" @click="choseClass=true; selectClass(selectedClazz)">Accept</button>
+        </div>
+        <div v-if="choseClass">
             <div class="backgroundImage" :style="'background-color: '+backgroundColor+';'"></div>
             <div v-if="toggleBackgroundImage" class="backgroundImage"
                 :style="'background-image: url'+backgroundImage+'; filter: blur('+backgroundBlurValue/10+'px);'">
@@ -350,6 +358,11 @@
         var app = new Vue({
             el: '#app',
             data: {
+                choseClass: false,
+                selectedClazz: null,
+                choseSpec: false,
+                choseRace: false,
+                choseStats: false,
                 keyPressed: false,
                 toggleBackgroundImage: false,
                 toggleBackgroundImageVignette: true,
@@ -496,6 +509,7 @@
                 ],
                 classes: {
                     Druid: {
+                        name: 'Druid',
                         color: '#FF7C0A',
                         spells: [
                             {
@@ -556,6 +570,7 @@
                         ],
                     },
                     Monk: {
+                        name: 'Monk',
                         color: '#00FF98',
                         spells: [
                             {
@@ -589,6 +604,7 @@
                         ],
                     },
                     Paladin: {
+                        name: 'Paladin',
                         color: '#F48CBA',
                         specialPower: true,
                         spells: [
@@ -659,6 +675,7 @@
                         ],
                     },
                     Priest: {
+                        name: 'Priest',
                         color: '#FFFFFF',
                         spells: [ // Name of the class which have the following spells (for the moment there is only one class because the game isn't achieved yet, obviously)
                             {
@@ -774,6 +791,7 @@
                         ],
                     },
                     Shaman: {
+                        name: 'Shaman',
                         color: '#0070DD',
                         spells: [
                             {
@@ -1759,8 +1777,6 @@
                 document.addEventListener("keyup", (event) => {
                     this.keyPressed = false;
                 }, false);
-
-                this.selectClass("Priest");
 
                 this.statsCalculation()
 
