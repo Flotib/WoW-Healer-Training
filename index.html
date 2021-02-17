@@ -12,12 +12,16 @@
 <body>
     <div id="app">
         <div v-if="!choseClass" class="classSelectionScreen">
-            <div  v-for="clazz in classes" class="hoverScaleClassMenu">
-            <div :class="'classContainer' +(selectedClazz==clazz.name?' classContainerSelected':'')" @click="selectedClazz = clazz.name">
-                <img :src="'img/classes/'+clazz.name+'.png'" class="classIconSelection"/>
+            <div v-for="clazz in classes" class="hoverScaleClassMenu">
+                <div :class="'classContainer' +(selectedClazz==clazz.name?' classContainerSelected':'')"
+                    :style="'background-image: url(img/classes/bg/'+clazz.name+'Bg.png'"
+                    @click="selectedClazz = clazz.name">
+                    <img :src="'img/classes/'+clazz.name+'.png'" class="classIconSelection" />
+                    <div class="className" :style="'color:'+clazz.color">{{ clazz.name }}</div>
+                </div>
             </div>
-        </div>
-            <button :class="{ buttonValidateGrey:!selectedClazz, buttonValidate:selectedClazz }" @click="choseClass=true; selectClass(selectedClazz)">Accept</button>
+            <button :class="{ buttonValidateGrey:!selectedClazz, buttonValidate:selectedClazz }"
+                @click="if(selectedClazz){choseClass=true; selectClass(selectedClazz)}">Accept</button>
         </div>
         <div v-if="choseClass">
             <div class="backgroundImage" :style="'background-color: '+backgroundColor+';'"></div>
@@ -125,7 +129,8 @@
                             </div>
                             <div style="margin-top: 15px;">
                                 <h3 style="font-weight: 400; color: #AAABFE">Party :</h3>
-                                <button @click="removeAllAllies(); addAlly(1, 'tank'); addAlly(3, 'dps'); changeAllyHpByRole();">1<img
+                                <button
+                                    @click="removeAllAllies(); addAlly(1, 'tank'); addAlly(3, 'dps'); changeAllyHpByRole();">1<img
                                         src="img/roles/tank.png">1<img src="img/roles/healer.png">3<img
                                         src="img/roles/dps.png"></button>
                             </div>
@@ -234,9 +239,9 @@
                         <div class="playerHPbar" :data-label="Number((player.hp/player.maxHp*100).toFixed(1))+'%'">
                             <div class="statusEffectBigFrame">
                                 <div v-if="player.maxSpecialPower > 0" class="playerSpecialPower">
-                                    <div v-for="specialPower in player.maxSpecialPower-player.specialPower" class="emptyPaladinPower"></div>
-                                    <div v-for="specialPower in player.specialPower"
-                                        class="fullPaladinPower">
+                                    <div v-for="specialPower in player.maxSpecialPower-player.specialPower"
+                                        class="emptyPaladinPower"></div>
+                                    <div v-for="specialPower in player.specialPower" class="fullPaladinPower">
                                     </div>
                                 </div>
                                 <div v-for="(effect, index) in player.activeEffects" :key="index"
@@ -390,7 +395,7 @@
                 hoveredSpell: null,
                 holdClickHover: false,
                 spellInQueue: false,
-                manaRegen: 0.8/60, // (100 * 0.008)
+                manaRegen: 0.8 / 60, // (100 * 0.008)
                 globalCooldown: 1500,
                 remainGCD: null,
                 underGCD: false,
@@ -824,14 +829,14 @@
                                 use: function (game, state) { // one use per ally
                                     game.findEntityById(state.selectedEntityId).addHp(this.effectAmount)
                                 },
-                                use1: function (game, state) { 
-                                    game.findEntityById(state.selectedEntityId).addHp(this.effectAmount*Math.pow(0.7, 1))
+                                use1: function (game, state) {
+                                    game.findEntityById(state.selectedEntityId).addHp(this.effectAmount * Math.pow(0.7, 1))
                                 },
                                 use2: function (game, state) {
-                                    game.findEntityById(state.selectedEntityId).addHp(this.effectAmount*Math.pow(0.7, 2))
+                                    game.findEntityById(state.selectedEntityId).addHp(this.effectAmount * Math.pow(0.7, 2))
                                 },
                                 use3: function (game, state) {
-                                    game.findEntityById(state.selectedEntityId).addHp(this.effectAmount*Math.pow(0.7, 3))
+                                    game.findEntityById(state.selectedEntityId).addHp(this.effectAmount * Math.pow(0.7, 3))
                                 },
                             },
                         ],
@@ -1278,11 +1283,11 @@
                     this.player.mana = 0
                 },
 
-                killAllAllies(){
+                killAllAllies() {
                     for (const ally of this.allies) { ally.addHpPercent(-100) }
                 },
 
-                reviveAllAllies(){
+                reviveAllAllies() {
                     for (const ally of this.allies) { ally.addHpPercent(100) }
                 },
 
@@ -1304,7 +1309,7 @@
                         toHeal = allies
                     } else {
                         if (spell.mostInjured) {
-                            allies.sort((a, b) => (a.hp/a.maxHp) - (b.hp/b.maxHp))
+                            allies.sort((a, b) => (a.hp / a.maxHp) - (b.hp / b.maxHp))
                             toHeal = allies.slice(0, spell.multiTarget)
                         } else {
                             toHeal = []
@@ -1313,17 +1318,17 @@
                             }
                         }
                     }
-                    
+
                     if (spell.effectAmountChange) {
                         for (let i = 0; i < spell.multiTarget; i++) {
                             let ally = toHeal.shift()
-                            if (i==0) {
+                            if (i == 0) {
                                 spell.use1(this, { selectedEntityId: ally.id })
                             }
-                            if (i==1) {
+                            if (i == 1) {
                                 spell.use2(this, { selectedEntityId: ally.id })
                             }
-                            if (i==2) {
+                            if (i == 2) {
                                 spell.use3(this, { selectedEntityId: ally.id })
                             }
                         }

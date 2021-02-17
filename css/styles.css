@@ -1,3 +1,13 @@
+@font-face {
+    font-family: "Morpheus";
+    src: url("../fonts/morpheus.ttf") format("ttf");
+}
+
+@font-face {
+    font-family: "BlizQuadrata Web";
+    src: url("../fonts/fritzquad.ttf") format("ttf");
+}
+
 * {
     /*cursor: url(https://cur.cursors-4u.net/games/gam-4/gam372.cur), default !important; direct path*/
     cursor: url("../img/cursor.cur"), default !important;
@@ -10,14 +20,9 @@ img {
     pointer-events: none;
 }
 
-@font-face {
-    font-family: "Morpheus";
-    src: url("../fonts/morpheus.ttf") format("ttf");
-}
-
-/* html {
+html {
     background-color: #242426;
-} Now useless, only here because we never know what could happen next...*/
+}
 
 .backgroundImage {
     z-index: -100;
@@ -767,7 +772,7 @@ img {
 
 .rightMenu button:hover {
     border: 3px groove #999999;
-    background: linear-gradient(0deg, #5c060e 0%, #710008 28%, #770505 50%, #710008 72%, #5c060e 100%);
+    background: linear-gradient(0deg, #49050d 0%, #6d060d 28%, #810404 50%, #6d060d 72%, #49050d 100%);
 }
 
 .rightMenu button:active {
@@ -945,20 +950,19 @@ input:checked + .slide-container .nav label { display: block; }
     align-items: center;
     min-width: 100%;
     min-height: 100%;
-    background-color: #242426;
 }
 
 .classSelectionScreen .buttonValidateGrey {
     position: fixed;
     bottom: 5%;
     padding-top: 2px;
+    font-family: BlizQuadrata Web;
     width: 240px;
     height: 40px;
     border: 3px groove #696969;
     border-radius: 4px;
-    font-size: 24px;
+    font-size: 23px;
     color: #fff;
-    font-weight: 500;
     background: linear-gradient(0deg, #303030 0%, #4b4b4b 50%, #303030 100%);
     margin: 3px 0px 3px 0px;
     outline:none;
@@ -968,21 +972,21 @@ input:checked + .slide-container .nav label { display: block; }
     position: fixed;
     bottom: 5%;
     padding-top: 2px;
+    font-family: BlizQuadrata Web;
     width: 240px;
     height: 40px;
     border: 3px groove #696969;
     border-radius: 4px;
-    font-size: 24px;
-    color: #fff;
-    font-weight: 500;
-    background: linear-gradient(0deg, #390308 0%, #560107 28%, #640404 50%, #560107 72%, #390308 100%);
+    font-size: 23px;
+    color: #dfbd42;
+    background: linear-gradient(0deg, #390308 0%, #560107 28%, #640404 50%, #560107 72%, #390308 100%); 
     margin: 3px 0px 3px 0px;
     outline:none;
 }
 
 .classSelectionScreen .buttonValidate:hover {
     border: 3px groove #999999;
-    background: linear-gradient(0deg, #5c060e 0%, #710008 28%, #770505 50%, #710008 72%, #5c060e 100%);
+    background: linear-gradient(0deg, #49050d 0%, #6d060d 28%, #810404 50%, #6d060d 72%, #49050d 100%);
 }
 
 .classSelectionScreen .buttonValidate:active {
@@ -997,8 +1001,7 @@ input:checked + .slide-container .nav label { display: block; }
     flex-direction: column;
     align-items: center;
     justify-content: start;
-    background-color: #5a5a5a;
-    margin: 15px 15px 15px 15px;
+    margin: 15px 15px 15px 15px ;
     height: 500px;
     width: 300px;
     max-height: 100%;
@@ -1006,6 +1009,10 @@ input:checked + .slide-container .nav label { display: block; }
     min-height: 0;
     min-width: 0;
     user-select: none;
+    border-radius: 50% 50% 15px 15px;
+    background-position: bottom;
+    background-repeat: no-repeat;
+    filter: brightness(60%);
 }
 
 .hoverScaleClassMenu {
@@ -1014,22 +1021,23 @@ input:checked + .slide-container .nav label { display: block; }
 }
 
 .hoverScaleClassMenu:hover {
-    transition-duration: 800ms;
+    transition-duration: 600ms;
     transform: scale(1.1);
 }
 
 .classContainerSelected {
-    outline: 1px solid transparent;
-    box-shadow: 0 0 15px 5px #ff0000;
+    box-shadow: inset 0 0 30px 10px #ffdd45;
     outline: 1px solid transparent; /* Fix the chrome anti-aliasing issue --> https://bit.ly/3s3l4XW*/
+    filter: brightness(100%);
 }
 
 .classContainer:hover {
-    filter: brightness(150%)
+    filter: brightness(100%);
 }
 
 .classIconSelection {
     display: inline-block;
+    margin-top: 35px;
     width: 95px;
     height: auto;
     border-radius: 50%;
@@ -1043,4 +1051,13 @@ input:checked + .slide-container .nav label { display: block; }
 
 .classContainer:hover .classIconSelection {
     box-shadow: 0 0 35px 0px #fff891;
+}
+
+.className {
+    font-family: Morpheus;
+    font-size: 25px;
+    text-shadow: 1px 1px 2px black;
+    border-radius: 8px;
+    padding: 2px 5px 2px 5px;
+    background-color: #0000009d;
 }
