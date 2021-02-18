@@ -12,16 +12,27 @@
 <body>
     <div id="app">
         <div v-if="!choseClass" class="classSelectionScreen">
+            <div class="topFrameBox">
+            <div v-if="selectedClazz" class="classSelectedIndicator">You want to play as a <span :style="'font-family: Morpheus; color: '+selectedClazzColor+''">{{ selectedClazz }}</span></div>
+        </div>
+            <div class="classFrameBox">
             <div v-for="clazz in classes" class="hoverScaleClassMenu">
                 <div :class="'classContainer' +(selectedClazz==clazz.name?' classContainerSelected':'')"
                     :style="'background-image: url(img/classes/bg/'+clazz.name+'Bg.png'"
-                    @click="selectedClazz = clazz.name">
+                    @click="selectedClazz=clazz.name; selectedClazzColor=clazz.color">
+                    <div v-if="selectedClazz==clazz.name" class="selectedClassFrame"></div>
                     <img :src="'img/classes/'+clazz.name+'.png'" class="classIconSelection" />
                     <div class="className" :style="'color:'+clazz.color">{{ clazz.name }}</div>
+                    <!--<div class="classDescriptionBox">
+                        <div class="classDescriptionText">{{ clazz.description }}</div>
+                    </div> I abandoned this idea because the render don't look as good as I thought -->
                 </div>
             </div>
+        </div>
+        <div class="bottomFrameBox">
             <button :class="{ buttonValidateGrey:!selectedClazz, buttonValidate:selectedClazz }"
                 @click="if(selectedClazz){choseClass=true; selectClass(selectedClazz)}">Accept</button>
+            </div>
         </div>
         <div v-if="choseClass">
             <div class="backgroundImage" :style="'background-color: '+backgroundColor+';'"></div>
@@ -365,6 +376,7 @@
             data: {
                 choseClass: false,
                 selectedClazz: null,
+                selectedClazzColor: null,
                 choseSpec: false,
                 choseRace: false,
                 choseStats: false,
@@ -515,6 +527,7 @@
                 classes: {
                     Druid: {
                         name: 'Druid',
+                        description: 'Druids harness the vast powers of nature to preserve balance and protect life. As master shapeshifters, druids can take on the forms of a variety of beasts, each focused on a specific combat role.',
                         color: '#FF7C0A',
                         spells: [
                             {
@@ -576,6 +589,7 @@
                     },
                     Monk: {
                         name: 'Monk',
+                        description: 'Bare-knuckle brawlers whose no-weapon styles were born in ancient Pandaria, monks are as diverse as the energy that surrounds them. They can shoulder deadly attacks through the haze of their brews, heal broken chi flows, and beat their enemies with wind-quick fists and feet.',
                         color: '#00FF98',
                         spells: [
                             {
@@ -610,6 +624,7 @@
                     },
                     Paladin: {
                         name: 'Paladin',
+                        description: 'This is the call of the paladin: to protect the weak, to bring justice to the unjust, and to vanquish evil from the darkest corners of the world.',
                         color: '#F48CBA',
                         specialPower: true,
                         spells: [
@@ -681,6 +696,7 @@
                     },
                     Priest: {
                         name: 'Priest',
+                        description: 'Priests are devoted to the spiritual, and express their unwavering faith by serving the people. For millennia they have left behind the confines of their temples and the comfort of their shrines so they can support their allies in war-torn lands.',
                         color: '#FFFFFF',
                         spells: [ // Name of the class which have the following spells (for the moment there is only one class because the game isn't achieved yet, obviously)
                             {
@@ -797,6 +813,7 @@
                     },
                     Shaman: {
                         name: 'Shaman',
+                        description: 'Shaman are the spiritual leaders of their tribes and clans. They are masters of the elements, using spells and totems that heal or enhance their allies in battle while unleashing the fury of the elements upon their foes.',
                         color: '#0070DD',
                         spells: [
                             {
