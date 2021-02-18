@@ -12,26 +12,30 @@
 <body>
     <div id="app">
         <div v-if="!choseClass" class="classSelectionScreen">
+            <div class="classSelectionScreenLandscapeBackground"></div>
+            <div class="classSelectionScreenStatuesBackground"></div>
+            <div class="classSelectionScreenDarkBackground"></div>
             <div class="topFrameBox">
-            <div v-if="selectedClazz" class="classSelectedIndicator">You want to play as a <span :style="'font-family: Morpheus; color: '+selectedClazzColor+''">{{ selectedClazz }}</span></div>
-        </div>
+                <div v-if="selectedClazz" class="classSelectedIndicator">You want to play as a <span
+                        :style="'font-family: Morpheus; color: '+selectedClazzColor+''">{{ selectedClazz }}</span></div>
+            </div>
             <div class="classFrameBox">
-            <div v-for="clazz in classes" class="hoverScaleClassMenu">
-                <div :class="'classContainer' +(selectedClazz==clazz.name?' classContainerSelected':'')"
-                    :style="'background-image: url(img/classes/bg/'+clazz.name+'Bg.png'"
-                    @click="selectedClazz=clazz.name; selectedClazzColor=clazz.color">
-                    <div v-if="selectedClazz==clazz.name" class="selectedClassFrame"></div>
-                    <img :src="'img/classes/'+clazz.name+'.png'" class="classIconSelection" />
-                    <div class="className" :style="'color:'+clazz.color">{{ clazz.name }}</div>
-                    <!--<div class="classDescriptionBox">
+                <div v-for="clazz in classes" class="hoverScaleClassMenu">
+                    <div :class="'classContainer' +(selectedClazz==clazz.name?' classContainerSelected':'')"
+                        :style="'background-image: url(img/classes/bg/'+clazz.name+'Bg.png'"
+                        @click="selectedClazz=clazz.name; selectedClazzColor=clazz.color">
+                        <div v-if="selectedClazz==clazz.name" class="selectedClassFrame"></div>
+                        <img :src="'img/classes/'+clazz.name+'.png'" class="classIconSelection" />
+                        <div class="className" :style="'color:'+clazz.color">{{ clazz.name }}</div>
+                        <!--<div class="classDescriptionBox">
                         <div class="classDescriptionText">{{ clazz.description }}</div>
                     </div> I abandoned this idea because the render don't look as good as I thought -->
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="bottomFrameBox">
-            <button :class="{ buttonValidateGrey:!selectedClazz, buttonValidate:selectedClazz }"
-                @click="if(selectedClazz){choseClass=true; selectClass(selectedClazz)}">Accept</button>
+            <div class="bottomFrameBox">
+                <button :class="{ buttonValidateGrey:!selectedClazz, buttonValidate:selectedClazz }"
+                    @click="if(selectedClazz){choseClass=true; selectClass(selectedClazz)}">Accept</button>
             </div>
         </div>
         <div v-if="choseClass">
@@ -182,6 +186,12 @@
                                             <img src="img/bg/ragnaros.jpg">
                                         </div>
                                     </li>
+                                    <input type="radio" name="radio-buttons" id="img-4" />
+                                    <li class="slide-container">
+                                        <div class="slide-image">
+                                            <img src="img/bg/emeralddreamportal.jpg">
+                                        </div>
+                                    </li>
                                     <div class="carousel-dots">
                                         <label for="img-1" class="carousel-dot" id="img-dot-1"
                                             @click="backgroundImage = '(img/bg/northshire.jpg)'"
@@ -192,6 +202,9 @@
                                         <label for="img-3" class="carousel-dot" id="img-dot-3"
                                             @click="backgroundImage = '(img/bg/ragnaros.jpg)'"
                                             style="background-image: url(img/bg/ragnaros.jpg);"></label>
+                                        <label for="img-4" class="carousel-dot" id="img-dot-4"
+                                            @click="backgroundImage = '(img/bg/emeralddreamportal.jpg)'"
+                                            style="background-image: url(img/bg/emeralddreamportal.jpg);"></label>
                                     </div>
                                 </ul>
                             </div>

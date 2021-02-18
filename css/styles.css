@@ -950,7 +950,49 @@ input:checked + .slide-container .nav label { display: block; }
     align-items: center;
     min-width: 100%;
     min-height: 100%;
+
 }
+
+/*//////////////////////////////////////////
+// THAT'S A LOT OF DIV FOR ONE BACKGROUND // 
+//////////////////////////////////////////*/
+.classSelectionScreenLandscapeBackground {
+    z-index: 0;
+    position: absolute;
+    min-width: 100%;
+    min-height: 100%;
+    filter: blur(4px);
+    opacity: 0.5;
+    background-image: url('../img/bg/emeralddream.jpg');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: cover;
+}
+
+.classSelectionScreenStatuesBackground {
+    z-index: 0;
+    position: absolute;
+    min-width: 100%;
+    min-height: 100%;
+    filter: blur(0.6px);
+    background:  
+    url('../img/bg/StatueL.png') bottom right 108% no-repeat,
+    url('../img/bg/StatueR.png') bottom left 108% no-repeat;
+    background-size: 25%;
+}
+
+.classSelectionScreenDarkBackground {
+    z-index: 0;
+    position: absolute;
+    min-width: 100%;
+    min-height: 100%;
+    background-color: #00000099;
+    /*background: linear-gradient(90deg, #000000 1px, transparent 1%) center, linear-gradient(#000000 1px, transparent 1%) center, #00000000;
+    background-size: 2px 2px;*/
+}
+/*/////////////
+/// THE END ///
+/////////////*/
 
 .classFrameBox {
     display: flex;
@@ -963,6 +1005,7 @@ input:checked + .slide-container .nav label { display: block; }
 }
 
 .topFrameBox {
+    z-index: 1;
     display: flex;
     flex-wrap: wrap;
     flex-direction: row;
@@ -974,6 +1017,7 @@ input:checked + .slide-container .nav label { display: block; }
 }
 
 .bottomFrameBox {
+    z-index: 1;
     display: flex;
     flex-wrap: wrap;
     flex-direction: row;
