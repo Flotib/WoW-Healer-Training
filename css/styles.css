@@ -1,11 +1,25 @@
 @font-face {
     font-family: "Morpheus";
-    src: url("../fonts/morpheus.ttf") format("ttf");
+    src: url('../fonts/Morpheus.ttf') format('ttf');
+    src: url('../fonts/Morpheus.eot');
+    src: url('../fonts/Morpheus.eot?#iefix') format('embedded-opentype'),
+        url('../fonts/Morpheus.woff2') format('woff2'),
+        url('../fonts/Morpheus.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
 }
 
 @font-face {
     font-family: "BlizQuadrata Web";
-    src: url("../fonts/fritzquad.ttf") format("ttf");
+    src: url('../fonts/BlizQuadrataWeb.ttf') format('ttf');
+    src: url('../fonts/BlizQuadrataWeb.eot');
+    src: url('../fonts/BlizQuadrataWeb.eot?#iefix') format('embedded-opentype'),
+        url('../fonts/BlizQuadrataWeb.woff2') format('woff2'),
+        url('../fonts/BlizQuadrataWeb.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
 }
 
 * {
@@ -776,7 +790,8 @@ html {
 }
 
 .rightMenu button:active {
-    transform: translateY(2px);
+    transform: translateY(1px);
+    color: #e3e3e3;
     border: 3px groove #575757;
     background: linear-gradient(0deg, #300408 0%, #490307 28%, #520606 50%, #490307 72%, #300408 100%);
 }
@@ -950,13 +965,13 @@ input:checked + .slide-container .nav label { display: block; }
     align-items: center;
     min-width: 100%;
     min-height: 100%;
-
+    user-select: none;
 }
 
 /*//////////////////////////////////////////
 // THAT'S A LOT OF DIV FOR ONE BACKGROUND // 
 //////////////////////////////////////////*/
-.classSelectionScreenLandscapeBackground {
+.selectionScreenLandscapeBackground {
     z-index: 0;
     position: absolute;
     min-width: 100%;
@@ -969,7 +984,7 @@ input:checked + .slide-container .nav label { display: block; }
     background-size: cover;
 }
 
-.classSelectionScreenStatuesBackground {
+.selectionScreenStatuesBackground {
     z-index: 0;
     position: absolute;
     min-width: 100%;
@@ -981,7 +996,7 @@ input:checked + .slide-container .nav label { display: block; }
     background-size: 25%;
 }
 
-.classSelectionScreenDarkBackground {
+.selectionScreenDarkBackground {
     z-index: 0;
     position: absolute;
     min-width: 100%;
@@ -995,6 +1010,7 @@ input:checked + .slide-container .nav label { display: block; }
 /////////////*/
 
 .classFrameBox {
+    z-index: 1;
     display: flex;
     flex-wrap: wrap;
     flex-direction: row;
@@ -1029,7 +1045,7 @@ input:checked + .slide-container .nav label { display: block; }
 }
 
 
-.classSelectionScreen .buttonValidateGrey {
+.buttonValidateGrey {
     font-family: BlizQuadrata Web;
     width: 240px;
     height: 40px;
@@ -1042,7 +1058,7 @@ input:checked + .slide-container .nav label { display: block; }
     outline:none;
 }
 
-.classSelectionScreen .buttonValidate {
+.buttonValidate {
     font-family: BlizQuadrata Web;
     width: 240px;
     height: 40px;
@@ -1055,13 +1071,14 @@ input:checked + .slide-container .nav label { display: block; }
     outline:none;
 }
 
-.classSelectionScreen .buttonValidate:hover {
+.buttonValidate:hover {
     border: 3px groove #999999;
     background: linear-gradient(0deg, #49050d 0%, #6d060d 28%, #810404 50%, #6d060d 72%, #49050d 100%);
 }
 
-.classSelectionScreen .buttonValidate:active {
-    transform: translateY(2px);
+.buttonValidate:active {
+    transform: translateY(1px);
+    color: #c4a536;
     border: 3px groove #575757;
     background: linear-gradient(0deg, #300408 0%, #490307 28%, #520606 50%, #490307 72%, #300408 100%);
 }
@@ -1079,14 +1096,13 @@ input:checked + .slide-container .nav label { display: block; }
     flex-direction: column;
     align-items: center;
     justify-content: start;
-    margin: 15px 15px 15px 15px ;
+    margin: 15px 15px 15px 15px;
     height: 500px;
     width: 300px;
     max-height: 100%;
     max-width: 300px;
     min-height: 0;
     min-width: 0;
-    user-select: none;
     border-radius: 50% 50% 15px 15px;
     background-position: bottom;
     background-repeat: no-repeat;
@@ -1176,3 +1192,188 @@ input:checked + .slide-container .nav label { display: block; }
     background-color: #0000009d;
 }
 */
+
+.statsSelectionScreen {
+    display: flex;
+    position: absolute;
+    flex-wrap: wrap;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-width: 100%;
+    min-height: 100%;
+    user-select: none;
+}
+
+.statsFrameBox {
+    z-index: 1;
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    min-width: 100%;
+    margin: 15px 0px 15px 0px ;
+    height: auto;
+    min-height: 500px;
+}
+
+.statsFrame {
+    display: flex;
+    background-color: #00000081;
+    width: 230px;
+    height: 335px;
+    margin: 15px 15px 15px 15px;
+    padding: 20px;
+    border-radius: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: column;
+    align-items: center;
+    justify-content: start;
+    transition-duration: 150ms;
+}
+
+.statsFrame:hover {
+    background-color: #000000ad;
+    transition-duration: 250ms;
+    transform: scale(1.07);
+    box-shadow: 0px 0px 15px 0px var(--box-shadow-color);
+    /*box-shadow: 0 0 15px 0px #fff891;*/
+}
+
+.statsNameTitle {
+    z-index: 3;
+    display: inline-block;
+    margin-top: -46px;
+    width: auto;
+    height: auto;
+    text-align: center;
+    font-family: Morpheus;
+    font-size: 28px;
+    transition-duration: 150ms;
+}
+
+.statsFrame:hover .statsNameTitle { 
+    transition-duration: 250ms;
+    transform: translateY(-20px);
+}
+
+.statsValueInput {
+    border: none; 
+    border-width: 0; 
+    box-shadow: none;
+    appearance: none;
+    outline: none;
+    -webkit-appearance: none;
+    width: 100%;
+    height: auto;
+    background-color: transparent;
+    color: #fff;
+    text-align: center;
+    font-family: Blizquadrata Web;
+    font-size: 30px;
+    margin: 20px 0px 20px 0px;
+}
+
+.statsValueInput input::-webkit-outer-spin-button, input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.statsSlider {
+    -webkit-appearance: none;
+    width: 75%;
+    height: 8px;
+    appearance: none;
+    outline: none;
+    border: 3px groove #696969;
+    border-radius: 6px;
+    background-color: #000000ab
+}
+
+.statsSlider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 32px;
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-image: url('../img/sliderbarbutton.png');
+}
+
+.statsDescription {
+    margin-top: auto;
+    color: #fff;
+    text-align: center;
+    font-size: 18px;
+}
+
+.statsBottomInformation {
+    width: 100%;
+    height: auto;
+    margin: auto 0px 10px 0px;
+    text-align: center;
+    font-size: 16px;
+    font-style: italic;
+    line-height: 16px;
+}
+
+.buttonStatsInfo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: BlizQuadrata Web;
+    width: 100%;
+    height: 10%;
+    border: 3px groove #696969;
+    border-radius: 4px;
+    font-size: 23px;
+    font-family: BlizQuadrata Web;
+    color: #dfbd42;
+    background: linear-gradient(0deg, #390308 0%, #560107 28%, #640404 50%, #560107 72%, #390308 100%); 
+    outline:none;
+}
+
+.buttonStatsInfo:hover {
+    border: 3px groove #999999;
+    background: linear-gradient(0deg, #49050d 0%, #6d060d 28%, #810404 50%, #6d060d 72%, #49050d 100%);
+}
+
+.buttonStatsInfo:active {
+    transform: translateY(1px);
+    color: #c4a536;
+    border: 3px groove #575757;
+    background: linear-gradient(0deg, #300408 0%, #490307 28%, #520606 50%, #490307 72%, #300408 100%);
+}
+
+.statsTopBox{
+    z-index: 1;
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    min-width: 100%;
+    height: 50px;
+    margin-bottom: 6%;
+}
+
+.statsBottomBox {
+    z-index: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: row;
+    flex-wrap: wrap;
+    min-width: 100%;
+    height: 50px;
+    margin-top: 5%;
+}
+
+.redWarnMessage {
+    color: #a10707;
+    font-size: 20px;
+    font-weight: 500;
+}

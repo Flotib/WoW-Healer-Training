@@ -12,9 +12,9 @@
 <body>
     <div id="app">
         <div v-if="!choseClass" class="classSelectionScreen">
-            <div class="classSelectionScreenLandscapeBackground"></div>
-            <div class="classSelectionScreenStatuesBackground"></div>
-            <div class="classSelectionScreenDarkBackground"></div>
+            <div class="selectionScreenLandscapeBackground"></div>
+            <div class="selectionScreenStatuesBackground"></div>
+            <div class="selectionScreenDarkBackground"></div>
             <div class="topFrameBox">
                 <div v-if="selectedClazz" class="classSelectedIndicator">You want to play as a <span
                         :style="'font-family: Morpheus; color: '+selectedClazzColor+''">{{ selectedClazz }}</span></div>
@@ -34,11 +34,87 @@
                 </div>
             </div>
             <div class="bottomFrameBox">
-                <button :class="{ buttonValidateGrey:!selectedClazz, buttonValidate:selectedClazz }"
-                    @click="if(selectedClazz){choseClass=true; selectClass(selectedClazz)}">Accept</button>
+                <button :class="{ buttonValidateGrey:!selectedClazz, buttonValidate:selectedClazz }" 
+                   @click="selectedClazz ? selectClass(selectedClazz) + (choseClass=true) : null">Accept</button>
             </div>
         </div>
-        <div v-if="choseClass">
+
+        <div v-if="!choseStats && choseClass" class="statsSelectionScreen">
+            <div class="selectionScreenLandscapeBackground"></div>
+            <div class="selectionScreenStatuesBackground"></div>
+            <div class="selectionScreenDarkBackground"></div>
+            <div class="statsTopBox">
+                <div v-if="(player.spellPower>1800)||(-(-this.player.haste-this.player.mastery-this.player.versatility-this.player.criticalStrike)>=100)" class="redWarnMessage">Your stats are too high, try to be closest as possible from realistic values for a better experience!</div>
+            </div>
+            <div class="statsFrameBox">
+                <div class="statsFrame" id="spellPower" style="--box-shadow-color: #39e">
+                    <div class="statsNameTitle" style="color:#249dee">Spellpower</div>
+                    <input type="number" v-model="player.spellPower" class="statsValueInput">
+                    <input type="range" min="800" max="2000" class="statsSlider" v-model="player.spellPower">
+                    <div class="statsDescription">
+                        Spellpower is your total intellect, this is your main stat as a healer. More you have intellect, more your healing spells will be efficients.
+                    </div>
+                    <div class="statsBottomInformation" style="color: #39e;">
+                        Average intellect for a lvl 60 is something around 1200.
+                    </div>
+                    <button class="buttonStatsInfo">More info.</button>
+                </div>
+                <div class="statsFrame" id="haste" style="--box-shadow-color: #ff5">
+                    <div class="statsNameTitle" style="color:#f0ed47">Haste</div>
+                    <input type="number" v-model="player.haste" class="statsValueInput">
+                    <input type="range" min="0" max="100" class="statsSlider" v-model="player.haste">
+                    <div class="statsDescription">
+                        Haste increases your casting speed and the tick rate of heal over time. Haste also reduces the length of the GCD.
+                    </div>
+                    <div class="statsBottomInformation" style="color: #ff5;">
+                        Chose the percent you want. Try to balance your attributes smartly.
+                    </div>
+                    <button class="buttonStatsInfo">More info.</button>
+                </div>
+                <div class="statsFrame" id="versatility" style="--box-shadow-color: #4e4">
+                    <div class="statsNameTitle" style="color:#35df43">Versatility</div>
+                    <input type="number" v-model="player.versatility" class="statsValueInput">
+                    <input type="range" min="0" max="100" class="statsSlider" v-model="player.versatility">
+                    <div class="statsDescription">
+                        
+                    </div>
+                    <div class="statsBottomInformation" style="color: #4e4;">
+                        Chose the percent you want. Try to balance your attributes smartly.
+                    </div>
+                    <button class="buttonStatsInfo">More info.</button>
+                </div>
+                <div class="statsFrame" id="mastery" style="--box-shadow-color: #f5d">
+                    <div class="statsNameTitle" style="color:#ee54cd">Mastery</div>
+                    <input type="number" v-model="player.mastery" class="statsValueInput">
+                    <input type="range" min="0" max="100" class="statsSlider" v-model="player.mastery">
+                    <div class="statsDescription">
+                        
+                    </div>
+                    <div class="statsBottomInformation" style="color:#f5d">
+                        Chose the percent you want. Try to balance your attributes smartly.
+                    </div>
+                    <button class="buttonStatsInfo">More info.</button>
+                </div>
+                <div class="statsFrame" id="criticalStrike" style="--box-shadow-color: #f33">
+                    <div class="statsNameTitle" style="color:#ee2f28">Critical strike</div>
+                    <input type="number" v-model="player.criticalStrike" class="statsValueInput">
+                    <input type="range" min="0" max="100" class="statsSlider" v-model="player.criticalStrike">
+                    <div class="statsDescription">
+                        
+                    </div>
+                    <div class="statsBottomInformation" style="color:#f33">
+                        Chose the percent you want. Try to balance your attributes smartly.
+                    </div>
+                    <button class="buttonStatsInfo">More info.</button>
+                </div>
+            </div>
+            <div class="statsBottomBox">
+                <button class="buttonValidate" @click="choseClass=false" style="width: 140px; margin: 0px 8px 0px 8px">Back</button>
+                <button class="buttonValidate" @click="statsCalculation() + (choseStats=true)" style="width: 140px; margin: 0px 8px 0px 8px">Next</button>
+            </div>
+        </div>
+
+        <div v-if="choseClass && choseStats">
             <div class="backgroundImage" :style="'background-color: '+backgroundColor+';'"></div>
             <div v-if="toggleBackgroundImage" class="backgroundImage"
                 :style="'background-image: url'+backgroundImage+'; filter: blur('+backgroundBlurValue/10+'px);'">
@@ -1403,7 +1479,7 @@
                 },
 
                 selectClass(clazz) {
-                    this.spells.length = 0;
+                    this.spells.length = 0
 
                     for (const spell of this.classes[clazz].spells) {
                         this.spells.push({
