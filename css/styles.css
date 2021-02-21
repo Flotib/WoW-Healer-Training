@@ -1377,3 +1377,29 @@ input:checked + .slide-container .nav label { display: block; }
     font-size: 20px;
     font-weight: 500;
 }
+
+.popUpMoreInfoBox {
+    z-index: 8;
+    display: flex;
+    position: absolute;
+    background-color: #0000008e;
+    width: 100%;
+    height: 100%;
+    justify-content: center;
+    align-items: center;
+}
+
+.popUpMoreInfo {
+    z-index: 10;
+    position: absolute;
+    display: flex;
+    align-items: center;
+    width: 24rem;
+    height: 28rem;
+    font-size: 1.5rem;
+    background-color: #0f0f0f;
+    border-radius: 0.5rem;
+    border: 2px solid #e3e3e3;
+    text-align: center;
+    color: #fff;
+}
