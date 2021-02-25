@@ -1074,11 +1074,11 @@ input:checked + .slide-container .nav label { display: block; }
 .buttonValidate:hover {
     border: 3px groove #999999;
     background: linear-gradient(0deg, #49050d 0%, #6d060d 28%, #810404 50%, #6d060d 72%, #49050d 100%);
+    color: #fff;
 }
 
 .buttonValidate:active {
     transform: translateY(1px);
-    color: #c4a536;
     border: 3px groove #575757;
     background: linear-gradient(0deg, #300408 0%, #490307 28%, #520606 50%, #490307 72%, #300408 100%);
 }
@@ -1339,11 +1339,11 @@ input:checked + .slide-container .nav label { display: block; }
 .buttonStatsInfo:hover {
     border: 3px groove #999999;
     background: linear-gradient(0deg, #49050d 0%, #6d060d 28%, #810404 50%, #6d060d 72%, #49050d 100%);
+    color: #fff;
 }
 
 .buttonStatsInfo:active {
     transform: translateY(1px);
-    color: #c4a536;
     border: 3px groove #575757;
     background: linear-gradient(0deg, #300408 0%, #490307 28%, #520606 50%, #490307 72%, #300408 100%);
 }
