@@ -156,6 +156,7 @@
                 <button @click="playerSetMinMana">mana 0</button>
                 <button @click="playerSetMaxMana">mana 100</button>
                 <button @click="player.addMana(-10)">Mana -10</button>
+                <button @click="debugDamageRaid = !debugDamageRaid">toggle raiddamage</button>
                 <!--<input v-model="manaRegen" id="number" type="number" style="width: 35px;">-->
                 <input v-model="player.spellPower" type="number" style="width: 50px; color: #4289e6; font-weight: 600;"
                     @input="statsCalculation">
@@ -168,7 +169,7 @@
                 <input v-model="player.mastery" type="number" style="width: 50px; color: #ff58cd; font-weight: 600;"
                     @input="statsCalculation">
                 <div style="color: white; display: inline-block;">
-                    {{ selectedEntity ? selectedEntity.id : 'none' }}
+                    <!--{{ selectedEntity ? selectedEntity.id : 'none' }}
                     <div style="color: #b3b3b3; display: inline-block; margin-left: 10px;">
                         {{ selected ? selected : 'none' }}
                     </div>
@@ -201,7 +202,7 @@
                     </div>
                     <div style="color: #ffffff; display: inline-block; margin-left: 10px;">
                         {{ player.specialPower }} - {{ player.maxSpecialPower }}
-                    </div>
+                    </div>-->
                     <button @click="selectClass('Priest')"
                         :style="'margin-left: 10px; color:'+classes.Priest.color+'; background-color: black;'">Priest</button>
                     <button @click="selectClass('Monk')"
@@ -530,6 +531,7 @@
                 spellQueueDelay: 400,
                 spellchannelTicks: 0,
                 precedentTargetId: null,
+                debugDamageRaid: false,
                 allyTank: 0,
                 allyHealer: 0,
                 allyDps: 0,
@@ -993,6 +995,7 @@
                         baseEndEffectValue: null,
                         endEffectValue: null,
                         endEffectAffectedByStats: false,
+                        triggerAtStart: false, // if the effect triggers at the very beginning
                         baseDuration: 15000, // base duration of the statusEffect
                         maxDuration: 15000, // max value of the duration, only affect by stats
                         duration: 15000, // duration
@@ -1026,6 +1029,7 @@
                         baseEndEffectValue: null,
                         endEffectValue: null,
                         endEffectAffectedByStats: false,
+                        triggerAtStart: false,
                         baseDuration: 7500,
                         maxDuration: 7500,
                         duration: 7500,
@@ -1053,6 +1057,7 @@
                         baseEndEffectValue: null,
                         endEffectValue: null,
                         endEffectAffectedByStats: false,
+                        triggerAtStart: true,
                         baseDuration: 15000,
                         maxDuration: 15000,
                         duration: 15000,
@@ -1083,6 +1088,7 @@
                         baseEndEffectValue: null,
                         endEffectValue: null,
                         endEffectAffectedByStats: false,
+                        triggerAtStart: false,
                         baseDuration: 8000,
                         maxDuration: 8000,
                         duration: 8000,
@@ -1111,6 +1117,7 @@
                         baseEndEffectValue: 1.15,
                         endEffectValue: 1.15,
                         endEffectAffectedByStats: true,
+                        triggerAtStart: false,
                         baseDuration: 15000,
                         maxDuration: 15000,
                         duration: 15000,
@@ -1795,6 +1802,10 @@
                             if (effect.baseEffect2 != null) {
                                 effect.applyEffect2(this, { selectedEntityId })
                             }
+                            if (effect.triggerAtStart) {
+                                ticksInterval = 0
+                                effect.ticks--
+                            }
                             let elune = () => {
                                 if (effect.break) {
                                     target.activeEffects.removeIf((x) => x.id == effect.id)
@@ -1928,8 +1939,10 @@
 
                 setInterval(() => {
                     if (step % 60 == 0) {
-                        for (const ally of this.allies) {
-                            ally.addHp(-ally.maxHp / 100)
+                        if (this.debugDamageRaid) {
+                            for (const ally of this.allies) {
+                                ally.addHp(-ally.maxHp / 100)
+                            }
                         }
                     }
                     for (const ally of this.allies) {
